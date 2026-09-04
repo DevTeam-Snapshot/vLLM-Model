@@ -1,0 +1,14 @@
+services:
+  llm-service:
+    build: .
+    ports:
+      - "8000:8000"
+    gpus: all
+    ipc: host
+    environment:
+      HF_TOKEN: ${HF_TOKEN}
+    volumes:
+      - hf-cache:/root/.cache/huggingface
+
+volumes:
+  hf-cache:
