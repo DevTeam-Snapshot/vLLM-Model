@@ -1,0 +1,5 @@
+# This lock is installed in Dockerfile.grpc.
+# The vLLM package itself is supplied by vllm/vllm-openai:v0.15.0.
+grpcio==1.78.0
+grpcio-reflection==1.78.0
+protobuf==6.33.4
