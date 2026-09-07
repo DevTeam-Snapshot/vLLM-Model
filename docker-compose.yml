@@ -1,8 +1,9 @@
 services:
   llm-service:
+    image: hotel-vllm:test
     build: .
     ports:
-      - "8000:8000"
+      - "127.0.0.1:18000:8000"
     gpus: all
     ipc: host
     environment:
