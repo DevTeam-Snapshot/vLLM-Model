@@ -1,0 +1,23 @@
+services:
+  llm-service:
+    image: hotel-vllm-grpc:0.1.0
+    build:
+      context: .
+      dockerfile: Dockerfile.grpc
+    ports:
+      - "127.0.0.1:15051:50051"
+    gpus: all
+    ipc: host
+    environment:
+      HF_TOKEN: ${HF_TOKEN}
+    volumes:
+      - hf-cache:/root/.cache/huggingface
+    networks:
+      - model-network
+
+volumes:
+  hf-cache:
+
+networks:
+  model-network:
+    name: vllm-model-network

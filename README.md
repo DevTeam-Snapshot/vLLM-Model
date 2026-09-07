@@ -1,19 +1,24 @@
 # vLLM Model Server
 
-부트캠프 팀 프로젝트의 AI 모델 추론 서버입니다. Model 파트는 GCP GPU VM에서 vLLM을 운영하고, Backend는 OpenAI 호환 API로 모델을 호출합니다. Frontend는 Backend API만 호출하며 모델 서버에 직접 접속하지 않습니다.
+부트캠프 팀 프로젝트의 AI 모델 추론 서버입니다. 이 저장소는 Qwen으로 광고 문구를 생성하고, Backend가 호출할 vLLM 서버를 제공합니다. Frontend는 모델 서버에 직접 연결하지 않고 FastAPI의 REST API만 호출합니다.
 
-기본 모델은 `Qwen/Qwen3-0.6B`이고, Backend에 노출되는 모델 이름은 `hotel-copy-llm`입니다.
+현재 통합 테스트의 우선 경로는 **FastAPI ↔ vLLM gRPC**입니다. 기존 OpenAI 호환 REST 구성도 유지하며, 두 서버는 GPU 메모리를 중복으로 사용하므로 동시에 실행하지 않습니다.
+
+기본 모델은 `Qwen/Qwen3-0.6B`의 고정 revision `c1899de289a04d12100db370d81485cdf75e47ca`입니다.
 
 ## 실행 모드
 
 | 모드 | 목적 | 접속 주소 | 사용 시점 |
 | --- | --- | --- | --- |
+| gRPC 통합 | FastAPI가 vLLM `VllmEngine`을 호출 | 컨테이너: `llm-service:50051`, 호스트: `127.0.0.1:15051` | 현재 Backend-Model 연동 테스트 |
 | 개인 VM 검증 | Model 담당자가 GCP VM에서 모델을 빌드·테스트 | `http://localhost:18000` | 모델 변경 및 연동 전 점검 |
 | 팀 Compose 통합 | Backend와 모델 서버가 같은 Docker Compose 네트워크에서 통신 | `http://llm-service:8000/v1` | 팀 통합 테스트 및 배포 |
 
 `18000`은 VM의 loopback(`127.0.0.1`)에만 바인딩됩니다. 외부 IP에서 `VM_IP:18000`으로 접근할 수 없으며, 이것이 의도된 보안 설정입니다.
 
 ```text
+gRPC 통합:   FastAPI → llm-service:50051 → vLLM gRPC 컨테이너
+
 개인 검증:  curl → VM localhost:18000 → vLLM 컨테이너:8000
 
 팀 통합:    Frontend → Backend → llm-service:8000 → vLLM 컨테이너
@@ -25,11 +30,179 @@
 | 항목 | 값 |
 | --- | --- |
 | Hugging Face 모델 | `Qwen/Qwen3-0.6B` |
+| Hugging Face revision | `c1899de289a04d12100db370d81485cdf75e47ca` |
 | Backend용 모델 이름 | `hotel-copy-llm` |
+| gRPC 컨테이너 포트 | `50051` |
+| gRPC 호스트 테스트 포트 | `127.0.0.1:15051` |
 | 컨테이너 포트 | `8000` |
 | 개인 VM 테스트 포트 | `127.0.0.1:18000` |
 | 최대 컨텍스트 길이 | 2,048 토큰 |
 | GPU 메모리 사용 한도 | 80% |
+
+## gRPC 통합 계약
+
+### 고정 버전
+
+| 구성 요소 | 버전 |
+| --- | --- |
+| vLLM Docker 이미지 | `vllm/vllm-openai:v0.15.0` |
+| gRPC Python 런타임 | `grpcio==1.78.0` |
+| gRPC reflection | `grpcio-reflection==1.78.0` |
+| Protobuf | `protobuf==6.33.4` |
+| Backend stub 생성 도구 | `grpcio-tools==1.78.0` |
+| Backend tokenizer | `transformers==4.56.0` |
+
+서버 의존성은 [requirements-grpc-server.txt](requirements-grpc-server.txt), Backend 전달용 의존성은 [requirements-grpc-client.txt](requirements-grpc-client.txt)에 고정했습니다. `smg-grpc-proto`는 이 서버의 의존성이 아닙니다. vLLM `v0.15.0`은 자체 `vllm.grpc` 프로토콜을 사용하므로, Backend는 이 저장소의 [vllm_engine.proto](proto/vllm_engine.proto)를 기준으로 stub을 생성해야 합니다.
+
+GPU VM에서 최초 실행할 때는 아래 명령으로 실제 컨테이너의 버전을 확인하고, 출력이 표의 값과 같은지 확인합니다.
+
+```bash
+docker compose -f docker-compose.grpc.yml exec llm-service \
+  python -c "import grpc, google.protobuf, vllm; print('vllm=', vllm.__version__); print('grpcio=', grpc.__version__); print('protobuf=', google.protobuf.__version__)"
+```
+
+### 역할 분리
+
+```text
+React -- REST JSON --> FastAPI -- gRPC --> vLLM
+                           |
+                           +-- SQLAlchemy ORM --> PostgreSQL
+```
+
+FastAPI가 `question`과 `index`를 받아 다음 작업을 수행합니다.
+
+1. 동일 revision의 Qwen tokenizer로 `question`에 chat template을 적용합니다. 이때 `add_generation_prompt=True`, `enable_thinking=False`를 사용합니다.
+2. 완성된 프롬프트를 `GenerateRequest.text`에 넣어 `VllmEngine.Generate`로 보냅니다.
+3. `stream=false`로 보내도 `Generate`는 server-streaming RPC입니다. FastAPI는 응답 스트림을 순회해 `complete.output_ids`를 찾아야 합니다.
+4. FastAPI가 동일 tokenizer로 `output_ids`를 decode해 `model_answer`를 만듭니다. thinking이 남아 있으면 `<think>...</think>` 구간을 최종 사용자 응답에서 제외합니다.
+5. `index`로 PostgreSQL의 `text`를 조회하고, `model_answer`, `db_text`를 React에 반환합니다.
+
+`VllmEngine.Generate`의 응답은 문자열이 아니라 토큰 ID입니다. Model 서버는 문자열 변환 API를 추가하지 않습니다.
+
+### proto 및 Backend stub 생성
+
+이 저장소의 `proto/vllm_engine.proto`는 `vLLM v0.15.0` 원본과 같은 wire contract입니다. Backend 저장소에서 다음처럼 생성합니다. 출력 디렉터리는 Backend의 Python import path에 있어야 합니다.
+
+```bash
+python -m grpc_tools.protoc \
+  -I ../vLLM-Model/proto \
+  --python_out=./grpc_stubs \
+  --grpc_python_out=./grpc_stubs \
+  ../vLLM-Model/proto/vllm_engine.proto
+```
+
+생성 후 `vllm_engine_pb2.py`, `vllm_engine_pb2_grpc.py`를 import해 `VllmEngineStub`을 사용합니다. 생성 파일은 proto의 파생물이며 수동 수정하지 않습니다.
+
+### 접속 주소
+
+| 실행 위치 | FastAPI의 gRPC target |
+| --- | --- |
+| Backend가 같은 Docker network에 있음 | `llm-service:50051` |
+| Backend를 GPU 호스트에서 로컬 프로세스로 실행 | `127.0.0.1:15051` |
+| Backend가 다른 PC에 있음 | SSH 터널로 연결한 `127.0.0.1:15051` |
+
+gRPC 포트는 인증·암호화가 없는 내부 통신용입니다. `50051`을 공인 IP나 GCP 방화벽에 공개하지 않습니다.
+
+Model과 Backend가 서로 다른 Compose 파일을 쓴다면, Backend Compose는 Model Compose가 만든 `vllm-model-network`에 참여해야 합니다.
+
+```yaml
+services:
+  backend:
+    networks:
+      - model-network
+
+networks:
+  model-network:
+    external: true
+    name: vllm-model-network
+```
+
+이 경우 Backend의 target은 `llm-service:50051`입니다. Backend 컨테이너를 같은 network에 넣지 않으면 `llm-service` 이름은 해석되지 않습니다.
+
+### gRPC 서버 실행
+
+GPU, Docker, NVIDIA Container Toolkit이 준비된 Linux VM에서 실행합니다.
+
+```bash
+cd ~/vLLM-Model
+cp .env.example .env
+docker compose -f docker-compose.grpc.yml up --build -d
+docker compose -f docker-compose.grpc.yml logs -f llm-service
+```
+
+호스트 포트는 `127.0.0.1:15051`로만 바인딩됩니다. 다른 PC에서 Backend를 실행할 때는 GCP VM에 다음 SSH 터널을 열어야 합니다.
+
+```bash
+gcloud compute ssh <VM_NAME> --zone <ZONE> -- -L 15051:127.0.0.1:15051
+```
+
+### HealthCheck 및 Generate 검증
+
+`grpcurl`이 설치된 GPU VM 또는 SSH 터널을 연 로컬 PC에서 아래를 실행합니다.
+
+```bash
+grpcurl -plaintext \
+  -import-path proto \
+  -proto vllm_engine.proto \
+  -d '{}' \
+  localhost:15051 vllm.grpc.engine.VllmEngine/HealthCheck
+```
+
+성공 기준은 다음과 같이 `healthy: true`입니다.
+
+```json
+{
+  "healthy": true,
+  "message": "Health"
+}
+```
+
+Generate 요청에는 Qwen chat template이 적용된 문자열을 넣습니다. 아래는 프로토콜 확인용 예시이며, Backend는 tokenizer가 만든 문자열을 사용해야 합니다.
+
+```bash
+grpcurl -plaintext \
+  -import-path proto \
+  -proto vllm_engine.proto \
+  -d '{
+    "request_id": "grpc-smoke-001",
+    "text": "<|im_start|>user\\n오션뷰 호텔의 할인 광고 문구를 한국어로 작성해줘.<|im_end|>\\n<|im_start|>assistant\\n<think>\\n\\n</think>\\n\\n",
+    "sampling_params": {
+      "temperature": 0,
+      "max_tokens": 80,
+      "skip_special_tokens": true,
+      "seed": 42
+    },
+    "stream": false
+  }' \
+  localhost:15051 vllm.grpc.engine.VllmEngine/Generate
+```
+
+성공 응답은 `complete.outputIds`를 포함합니다. Backend Python stub에서는 같은 값이 `response.complete.output_ids`입니다.
+
+```json
+{
+  "complete": {
+    "outputIds": [123, 456],
+    "finishReason": "stop"
+  }
+}
+```
+
+## Backend 전달 체크리스트
+
+Backend 담당자에게 아래를 전달합니다.
+
+```text
+- 모델 저장소 commit SHA와 Docker 이미지 태그
+- Dockerfile.grpc 및 docker-compose.grpc.yml 실행 명령
+- requirements-grpc-client.txt의 고정 패키지 버전
+- proto/vllm_engine.proto
+- gRPC target: llm-service:50051 (동일 Docker network)
+- HealthCheck: VllmEngine.HealthCheck, healthy=true가 성공 기준
+- Generate: server-streaming RPC, stream=false여도 complete 응답을 스트림에서 읽음
+- request.text: FastAPI가 Qwen chat template을 적용한 문자열
+- response.complete.output_ids: FastAPI가 같은 revision tokenizer로 decode
+```
 
 ## 공통 사전 준비
 
@@ -267,8 +440,13 @@ Backend는 OpenAI 호환 Chat Completions API를 호출합니다.
 
 ```text
 .
-├── Dockerfile           # vLLM 이미지와 서버 시작 옵션
-├── docker-compose.yml   # 개인 VM 검증용 Compose 설정
-├── .env.example         # Hugging Face 토큰 예시
-└── README.md            # 개인 검증 및 팀 통합 안내
+├── Dockerfile                       # OpenAI 호환 REST 서버
+├── Dockerfile.grpc                  # VllmEngine gRPC 서버
+├── docker-compose.yml               # REST 개인 VM 검증용 Compose 설정
+├── docker-compose.grpc.yml          # gRPC 통합 테스트용 Compose 설정
+├── proto/vllm_engine.proto          # vLLM v0.15.0 고정 gRPC wire contract
+├── requirements-grpc-server.txt     # gRPC 서버 고정 의존성
+├── requirements-grpc-client.txt     # Backend에 전달할 gRPC client 의존성
+├── .env.example                     # Hugging Face 토큰 예시
+└── README.md                        # 실행 및 Backend 연동 안내
 ```
