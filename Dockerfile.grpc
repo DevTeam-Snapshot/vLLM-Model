@@ -1,5 +1,7 @@
 FROM vllm/vllm-openai:v0.15.0
 
+RUN rm -f /usr/local/cuda-12.9/compat/libcuda.so*
+
 COPY requirements-grpc-server.txt /tmp/requirements-grpc-server.txt
 RUN python3 -m pip install --no-cache-dir -r /tmp/requirements-grpc-server.txt
 
