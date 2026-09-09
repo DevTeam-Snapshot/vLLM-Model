@@ -13,7 +13,18 @@ services:
     volumes:
       - hf-cache:/root/.cache/huggingface
     networks:
-      - model-network
+      model-network:
+      backend-network:
+        aliases:
+          - llm-service
+  fastapi-app:
+    build: .
+    ports:
+      - "9001:9000"
+    env_file:
+      - .env
+    depends_on:
+      - llm-service
 
 volumes:
   hf-cache:
@@ -21,3 +32,6 @@ volumes:
 networks:
   model-network:
     name: vllm-model-network
+  backend-network:
+    external: true
+    name: fastapi-backend_default
