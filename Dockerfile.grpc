@@ -8,4 +8,7 @@ RUN python3 -m pip install --no-cache-dir -r /tmp/requirements-grpc-server.txt
 EXPOSE 50051
 
 ENTRYPOINT ["python3", "-m", "vllm.entrypoints.grpc_server"]
-CMD ["--model", "Qwen/Qwen3-0.6B", "--revision", "c1899de289a04d12100db370d81485cdf75e47ca", "--host", "0.0.0.0", "--port", "50051", "--max-model-len", "2048", "--gpu-memory-utilization", "0.80"]
+CMD ["--model", "Qwen/Qwen3-0.6B", "--revision", "c1899de289a04d12100db370d81485cdf75e47ca", "--host", "0.0.0.0", "--port", "50051", "--max-model-len", "2048", "--gpu-memory-utilization", "0.80", "--enable-log-requests"]
+
+
+
