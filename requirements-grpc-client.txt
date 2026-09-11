@@ -1,6 +1,4 @@
-# Copy these entries to the FastAPI backend requirements file.
-# Generated stubs come from this repository's proto/vllm_engine.proto.
-grpcio==1.78.0
-grpcio-tools==1.78.0
-protobuf==6.33.4
-transformers==4.56.0
+# Copy these dependencies to the FastAPI backend before generating client stubs.
+grpcio>=1.60,<2
+grpcio-tools>=1.60,<2
+protobuf>=5,<7

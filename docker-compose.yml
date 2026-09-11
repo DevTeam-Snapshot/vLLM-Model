@@ -1,15 +1,17 @@
+name: hotel-ad-image
+
 services:
   llm-service:
-    image: hotel-vllm:test
+    image: hotel-ad-image-api:latest
     build: .
     ports:
-      - "127.0.0.1:18000:8000"
-    gpus: all
-    ipc: host
+      - "127.0.0.1:15051:50051"
     environment:
-      HF_TOKEN: ${HF_TOKEN}
-    volumes:
-      - hf-cache:/root/.cache/huggingface
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    networks:
+      backend-network:
 
-volumes:
-  hf-cache:
+networks:
+  backend-network:
+    external: true
+    name: ${BACKEND_DOCKER_NETWORK:-fastapi-backend_default}

@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package hotel.adimage.v1;
+
+service HotelAdvertisementImageService {
+  rpc GenerateAdvertisementImage(GenerateAdvertisementImageRequest) returns (GenerateAdvertisementImageResponse);
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+message GenerateAdvertisementImageRequest {
+  string request_id = 1;
+  bytes hotel_image_bytes = 2;
+  string image_mime_type = 3;
+  string hotel_description = 4;
+  string ad_copy = 5;
+  string additional_instructions = 6;
+}
+
+message GenerateAdvertisementImageResponse {
+  bytes image_bytes = 1;
+  string image_mime_type = 2;
+}
+
+message HealthCheckRequest {}
+
+message HealthCheckResponse {
+  bool healthy = 1;
+}

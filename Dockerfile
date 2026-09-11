@@ -1,7 +1,15 @@
-FROM vllm/vllm-openai:v0.15.0
+FROM python:3.12-slim
 
-RUN rm -f /usr/local/cuda-12.9/compat/libcuda.so*
+WORKDIR /app
 
-EXPOSE 8000
+COPY requirements.txt .
+RUN python -m pip install --no-cache-dir -r requirements.txt
 
-CMD ["--model", "Qwen/Qwen3-0.6B", "--served-model-name", "hotel-copy-llm", "--max-model-len", "2048", "--gpu-memory-utilization", "0.80"]
+COPY image_service.py grpc_server.py .
+COPY proto/hotel_ad_image.proto proto/
+RUN mkdir generated && python -m grpc_tools.protoc -I proto --python_out=generated --grpc_python_out=generated proto/hotel_ad_image.proto
+
+ENV PYTHONPATH=/app/generated
+EXPOSE 50051
+
+CMD ["python", "grpc_server.py"]

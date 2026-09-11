@@ -1,37 +1,19 @@
+name: hotel-ad-image
+
 services:
   llm-service:
-    image: hotel-vllm-grpc:0.1.0
+    image: hotel-ad-image-api:latest
     build:
       context: .
-      dockerfile: Dockerfile.grpc
+      dockerfile: Dockerfile
     ports:
       - "127.0.0.1:15051:50051"
-    gpus: all
-    ipc: host
     environment:
-      HF_TOKEN: ${HF_TOKEN}
-    volumes:
-      - hf-cache:/root/.cache/huggingface
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     networks:
-      model-network:
       backend-network:
-        aliases:
-          - llm-service
-  fastapi-app:
-    build: .
-    ports:
-      - "9001:9000"
-    env_file:
-      - .env
-    depends_on:
-      - llm-service
-
-volumes:
-  hf-cache:
 
 networks:
-  model-network:
-    name: vllm-model-network
   backend-network:
     external: true
-    name: fastapi-backend_default
+    name: ${BACKEND_DOCKER_NETWORK:-fastapi-backend_default}
