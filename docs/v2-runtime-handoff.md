@@ -36,6 +36,7 @@
 | VLLM_MODEL | hotel-agent | vLLM --served-model-name과 일치 |
 | VLLM_API_KEY | EMPTY | vLLM 인증이 있으면 서버와 같은 값 |
 | VLLM_CONTEXT_TOKENS | 12288 | 실제 vLLM max-model-len과 일치시킬 전체 문맥 한도 |
+| VLLM_GPU_MEMORY_UTILIZATION | 0.90 | L4에서 12,288토큰 KV 캐시를 확보하기 위한 vLLM GPU 메모리 사용률 |
 | VLLM_TIMEOUT_SECONDS | 25 | 토큰 계산과 추론 요청에 사용되는 시간 예산, 최대 25 |
 | OPENAI_API_KEY | 빈 값 | live 이미지 생성용, 사용자 환경에만 설정 |
 | IMAGE_MODEL | gpt-image-2 | 기존 프로젝트 이미지 모델 |

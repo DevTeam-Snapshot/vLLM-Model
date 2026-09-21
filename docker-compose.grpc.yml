@@ -28,7 +28,7 @@ services:
       - --max-num-seqs
       - "1"
       - --gpu-memory-utilization
-      - "0.85"
+      - ${VLLM_GPU_MEMORY_UTILIZATION:-0.90}
     gpus: all
     ipc: host
     volumes:
