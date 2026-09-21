@@ -14,7 +14,6 @@ services:
   vllm:
     image: vllm/vllm-openai:v0.29.0
     command:
-      - --model
       - Qwen/Qwen3-8B
       - --served-model-name
       - hotel-agent
@@ -30,8 +29,6 @@ services:
       - "1"
       - --gpu-memory-utilization
       - "0.85"
-      - --swap-space
-      - "0"
     gpus: all
     ipc: host
     volumes:
