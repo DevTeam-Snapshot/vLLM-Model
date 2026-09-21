@@ -34,9 +34,10 @@
 | PORT | 50051 | 서버 포트. compose 내부 포트는 50051 고정 |
 | VLLM_BASE_URL | Python 기본값: http://127.0.0.1:8000/v1; GCP Compose: http://vllm:18080/v1 | 컨테이너에서 실제 접근 가능한 vLLM 주소. GCP의 vLLM 포트는 호스트에 게시하지 않음 |
 | VLLM_MODEL | hotel-agent | vLLM --served-model-name과 일치 |
+| VLLM_SOURCE_MODEL | Qwen/Qwen3-4B | vLLM이 Hugging Face에서 로드할 원본 모델 |
 | VLLM_API_KEY | EMPTY | vLLM 인증이 있으면 서버와 같은 값 |
 | VLLM_CONTEXT_TOKENS | 12288 | 실제 vLLM max-model-len과 일치시킬 전체 문맥 한도 |
-| VLLM_GPU_MEMORY_UTILIZATION | 0.90 | L4에서 12,288토큰 KV 캐시를 확보하기 위한 vLLM GPU 메모리 사용률 |
+| VLLM_GPU_MEMORY_UTILIZATION | 0.80 | Qwen3-4B와 12,288토큰 문맥을 위한 L4 GPU 메모리 사용 한도 |
 | VLLM_TIMEOUT_SECONDS | 25 | 토큰 계산과 추론 요청에 사용되는 시간 예산, 최대 25 |
 | OPENAI_API_KEY | 빈 값 | live 이미지 생성용, 사용자 환경에만 설정 |
 | IMAGE_MODEL | gpt-image-2 | 기존 프로젝트 이미지 모델 |

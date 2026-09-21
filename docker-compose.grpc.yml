@@ -14,7 +14,7 @@ services:
   vllm:
     image: vllm/vllm-openai:v0.29.0
     command:
-      - Qwen/Qwen3-8B
+      - ${VLLM_SOURCE_MODEL:-Qwen/Qwen3-4B}
       - --served-model-name
       - hotel-agent
       - --host
@@ -28,7 +28,7 @@ services:
       - --max-num-seqs
       - "1"
       - --gpu-memory-utilization
-      - ${VLLM_GPU_MEMORY_UTILIZATION:-0.90}
+      - ${VLLM_GPU_MEMORY_UTILIZATION:-0.80}
     gpus: all
     ipc: host
     volumes:
