@@ -32,7 +32,7 @@
 | MODEL_MODE | fake | fake 또는 live, 자동 fallback 없음 |
 | GRPC_HOST | 0.0.0.0 | Python 서버 bind 주소 |
 | PORT | 50051 | 서버 포트. compose 내부 포트는 50051 고정 |
-| VLLM_BASE_URL | Python: http://127.0.0.1:8000/v1; Docker: http://host.docker.internal:8000/v1 | 컨테이너에서 실제 접근 가능한 vLLM 주소 |
+| VLLM_BASE_URL | Python 기본값: http://127.0.0.1:8000/v1; GCP Compose: http://vllm:18080/v1 | 컨테이너에서 실제 접근 가능한 vLLM 주소. GCP의 vLLM 포트는 호스트에 게시하지 않음 |
 | VLLM_MODEL | hotel-agent | vLLM --served-model-name과 일치 |
 | VLLM_API_KEY | EMPTY | vLLM 인증이 있으면 서버와 같은 값 |
 | VLLM_CONTEXT_TOKENS | 12288 | 실제 vLLM max-model-len과 일치시킬 전체 문맥 한도 |

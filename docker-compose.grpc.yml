@@ -5,6 +5,37 @@ services:
     extends:
       file: docker-compose.yml
       service: llm-service
+    environment:
+      VLLM_BASE_URL: http://vllm:${VLLM_INTERNAL_PORT:-18080}/v1
+    depends_on:
+      - vllm
+    networks:
+      - backend-network
+  vllm:
+    image: vllm/vllm-openai:v0.29.0
+    command:
+      - --model
+      - Qwen/Qwen3-8B
+      - --served-model-name
+      - hotel-agent
+      - --host
+      - 0.0.0.0
+      - --port
+      - ${VLLM_INTERNAL_PORT:-18080}
+      - --dtype
+      - bfloat16
+      - --max-model-len
+      - "12288"
+      - --max-num-seqs
+      - "1"
+      - --gpu-memory-utilization
+      - "0.85"
+      - --swap-space
+      - "0"
+    gpus: all
+    ipc: host
+    volumes:
+      - ${HOME}/.cache/huggingface:/root/.cache/huggingface
     networks:
       - backend-network
 networks:

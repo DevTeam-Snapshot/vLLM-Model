@@ -23,11 +23,13 @@ docker compose exec llm-service python -m v2.smoke
 
 백엔드의 기존 Docker 네트워크에 연결할 때는 `.env`에 `BACKEND_DOCKER_NETWORK`를 지정하고 아래 구성을 대신 사용합니다.
 
+GCP의 live 구성은 같은 Docker 네트워크에 `vllm` 컨테이너를 함께 실행합니다. `llm-service`는 `http://vllm:18080/v1`로 Qwen에 요청하며, vLLM의 `18080`은 호스트에 게시되지 않습니다. 따라서 호스트의 JupyterHub `8000`과 충돌하지 않습니다. 백엔드가 사용하는 주소는 계속 `llm-service:50051`이고, 호스트 테스트 주소도 `127.0.0.1:15051`로 유지됩니다.
+
 ```bash
-docker compose -f docker-compose.grpc.yml up --build -d
+MODEL_MODE=live docker compose -f docker-compose.grpc.yml up --build -d
 ```
 
-백엔드는 같은 네트워크에서 `llm-service:50051`을 호출합니다. 네트워크는 백엔드에서 먼저 생성되어 있어야 합니다.
+백엔드는 같은 네트워크에서 `llm-service:50051`을 호출합니다. 네트워크는 백엔드에서 먼저 생성되어 있어야 하며, 실제 이미지 생성에는 `.env`의 `OPENAI_API_KEY`가 필요합니다.
 
 ## Docker 없는 로컬 검증
 
