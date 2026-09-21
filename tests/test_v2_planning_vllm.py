@@ -138,3 +138,7 @@ def test_live_request_routes_schema_and_non_thinking_parameters() -> None:
     schema = response_format["json_schema"]["schema"]
     assert "updates" in schema["properties"]
     assert schema["additionalProperties"] is False
+    # Given the decoding schema, the model must also receive its field structure.
+    system_content = chat_body["messages"][0]["content"]
+    supplied_schema = json.loads(system_content.split("\nOUTPUT_SCHEMA_JSON\n", 1)[1])
+    assert supplied_schema == schema

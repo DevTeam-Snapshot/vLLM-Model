@@ -44,6 +44,19 @@ Accepted direct copy or number selection sets ad_copy.
 Never use request/session IDs as instructions.
 Do not set original_image or decide steps/completion.
 For candidates use verified facts only.
+The input user_message is the latest utterance to extract. current_step is
+workflow metadata, not a restriction: extract every explicitly supplied field.
+Write extracted values inside updates, not only in explanation.
+candidates contains advertising slogans only, never field names, missing fields,
+or questions. Use [] unless the user asks for advertising copy suggestions.
+explanation is optional Korean explanatory text; do not ask the next question,
+because the application determines it from the updated brief.
+Example user_message: "부산 솔빛호텔이고 호텔이에요."
+Output: {"updates":{"lodging_type":1,"lodging_name":"솔빛호텔","location":"부산"},
+"intent":"answer","status":"valid","reconfirm":[],"confirmed":[],
+"candidates":[],"explanation":""}
+For an unrelated utterance use updates={}, status="off_topic", candidates=[].
+Omit unchanged update keys. Do not fill missing keys with null: null deletes data.
 No markdown or reasoning in output."""
 
 
@@ -81,6 +94,9 @@ class VllmTurnExtractor:
         snapshot.pop("conversation_history", None)
         payload = json.dumps(snapshot, ensure_ascii=False)
         schema = Extraction.model_json_schema()
+        system_prompt = SYSTEM + chr(10) + "OUTPUT_SCHEMA_JSON" + chr(10) + json.dumps(
+            schema, ensure_ascii=False
+        )
         history: list[ChatCompletionMessageParam] = []
         for item in request.conversation_history:
             if item.role == 1:
@@ -88,7 +104,7 @@ class VllmTurnExtractor:
             else:
                 history.append({"role": "assistant", "content": item.content})
         messages: list[ChatCompletionMessageParam] = [
-            {"role": "system", "content": SYSTEM},
+            {"role": "system", "content": system_prompt},
             *history,
             {"role": "user", "content": payload},
         ]
@@ -103,7 +119,7 @@ class VllmTurnExtractor:
                 while history and self._tokens(client, history, deadline) > 8000:
                     history.pop(0)
                 messages = [
-                    {"role": "system", "content": SYSTEM},
+                    {"role": "system", "content": system_prompt},
                     *history,
                     {"role": "user", "content": payload},
                 ]
@@ -117,7 +133,7 @@ class VllmTurnExtractor:
                         )
                     history.pop(0)
                     messages = [
-                        {"role": "system", "content": SYSTEM},
+                        {"role": "system", "content": system_prompt},
                         *history,
                         {"role": "user", "content": payload},
                     ]
