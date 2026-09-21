@@ -1,18 +1,12 @@
+# Standalone legacy filename; attaches llm-service to the backend's existing network.
 name: hotel-ad-image
-
 services:
   llm-service:
-    image: hotel-ad-image-api:latest
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "127.0.0.1:15051:50051"
-    environment:
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    extends:
+      file: docker-compose.yml
+      service: llm-service
     networks:
-      backend-network:
-
+      - backend-network
 networks:
   backend-network:
     external: true

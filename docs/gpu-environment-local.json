@@ -1,0 +1,53 @@
+{
+  "checked_at_utc": "2026-09-16T08:31:11.738008+00:00",
+  "os": "Darwin",
+  "release": "24.6.0",
+  "architecture": "arm64",
+  "python": "3.9.6",
+  "tools": {
+    "docker": null,
+    "nvidia-smi": null,
+    "nvcc": null,
+    "vllm": null,
+    "uv": null
+  },
+  "packages": {
+    "vllm": null,
+    "torch": null,
+    "mlx": null,
+    "vllm-metal": null
+  },
+  "nvidia_gpus": {
+    "status": "not_found"
+  },
+  "cuda_toolkit": {
+    "status": "not_found"
+  },
+  "docker_client": {
+    "status": "not_found"
+  },
+  "macos": {
+    "status": "ok",
+    "returncode": 0,
+    "output": "15.7.4",
+    "error": ""
+  },
+  "cpu": {
+    "status": "failed",
+    "returncode": 1,
+    "output": "",
+    "error": "sysctl: sysctl fmt -1 1024 1: Operation not permitted"
+  },
+  "memory_bytes": {
+    "status": "failed",
+    "returncode": 1,
+    "output": "",
+    "error": "sysctl: sysctl fmt -1 1024 1: Operation not permitted"
+  },
+  "apple_hardware": {
+    "machine_name": "MacBook Air",
+    "chip_type": "Apple M1",
+    "physical_memory": "8 GB",
+    "number_processors": "proc 8:4:4"
+  }
+}

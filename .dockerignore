@@ -1,0 +1,10 @@
+.git
+.venv*
+.env
+__pycache__
+.pytest_cache
+.ruff_cache
+.codegraph
+artifacts
+.DS_Store
+docs/v2-backend-handoff*

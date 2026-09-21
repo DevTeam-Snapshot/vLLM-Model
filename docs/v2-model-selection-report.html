@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>V2 모델 선정 및 API 예산 보고서</title>
+  <style>
+    :root{--ink:#172b3a;--muted:#607482;--line:#dce5e9;--teal:#087e83;--light:#edf8f6;--paper:#fff;--bg:#eff3f5}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.75 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;word-break:keep-all}
+    main{max-width:1120px;margin:40px auto;padding:0 24px 40px}header{background:#122e3c;color:#fff;padding:44px 48px;border-radius:20px 20px 0 0;position:relative;overflow:hidden}
+    .eyebrow{font-size:12px;font-weight:700;letter-spacing:2px;color:#8edbd5;margin:0 0 16px}h1{font-size:36px;line-height:1.35;letter-spacing:-1.3px;margin:0 0 18px}header p{max-width:730px;color:#c6d8e0;margin:0} .meta{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:24px;font-size:12px;color:#c6d8e0}
+    .body{background:var(--paper);padding:36px 48px 44px;border-radius:0 0 20px 20px;box-shadow:0 16px 44px #172b3a0b}h2{font-size:23px;line-height:1.4;letter-spacing:-.6px;margin:0 0 16px}h3{font-size:16px;margin:0 0 8px}p{margin:0 0 14px}section+section{margin-top:38px;padding-top:30px;border-top:1px solid var(--line)}.section-label{font-size:11px;color:var(--teal);font-weight:800;letter-spacing:1.4px;margin-bottom:6px}.muted,.note{color:var(--muted)}.note{font-size:12px;margin:12px 0 0}.tag{display:inline-block;border-radius:5px;background:var(--light);color:#07686d;padding:3px 8px;font-size:11px;font-weight:700;white-space:nowrap}.tag.dark{background:#204553;color:#b4eeea}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px}.stat{padding:20px;border:1px solid var(--line);border-radius:12px}.stat.featured{background:var(--light);border-color:#a5dcd4}.stat small{display:block;color:var(--muted);font-size:12px}.amount{font-size:32px;font-weight:750;letter-spacing:-1px;font-variant-numeric:tabular-nums}.stat.featured .amount{color:var(--teal)}
+    .recommendation{border-left:4px solid var(--teal);background:#f6fafb;padding:22px 24px;border-radius:0 10px 10px 0}.recommendation strong{font-size:19px}.recommendation p{margin:8px 0 0}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px}.card{border:1px solid var(--line);padding:20px;border-radius:12px}.card .number{font-size:11px;font-weight:800;letter-spacing:1px;color:var(--teal)}.card h3{margin-top:8px}.card p{font-size:13px;color:var(--muted);margin:0}.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}table{width:100%;border-collapse:collapse;font-size:13px;text-align:left}th{background:#f2f6f8;color:#435c6c;font-size:12px;font-weight:700}th,td{padding:13px 15px;border-bottom:1px solid var(--line);vertical-align:top}tbody tr:last-child td{border-bottom:0}tr.pick td{background:#f0faf7}.money{white-space:nowrap;font-variant-numeric:tabular-nums}.model{font-weight:700;white-space:nowrap}a{color:#08757c;text-underline-offset:3px}code{font-family:ui-monospace,SFMono-Regular,monospace;font-size:.88em;overflow-wrap:anywhere}.callout{padding:16px 20px;background:#fff8e9;border:1px solid #f0dfb5;border-radius:10px;font-size:13px;margin-top:16px}.budget-bar{display:flex;height:20px;border-radius:6px;overflow:hidden;margin:20px 0 8px}.budget-bar span:nth-child(1){background:#124a5b}.budget-bar span:nth-child(2){background:#087e83}.budget-bar span:nth-child(3){background:#4fa5a1}.budget-bar span:nth-child(4){background:#90c9bd}.budget-bar span:nth-child(5){background:#d8e7e1}.split{display:grid;grid-template-columns:1.4fr 1fr;gap:24px}.aside{background:#f3f7f9;border-radius:12px;padding:22px}.aside ul{padding-left:20px;margin:10px 0 0}.aside li{font-size:13px;margin:8px 0}.steps{list-style:none;padding:0;margin:0;counter-reset:step}.steps li{counter-increment:step;display:grid;grid-template-columns:34px 1fr;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}.steps li:last-child{border-bottom:0}.steps li:before{content:counter(step,decimal-leading-zero);color:var(--teal);font-weight:800;font-size:14px}.steps p{margin:3px 0 0;font-size:13px;color:var(--muted)}.sources{font-size:12px;color:var(--muted);padding-left:20px}.sources li{margin:6px 0}footer{font-size:11px;color:var(--muted);margin-top:28px;padding-top:18px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:15px}.print-button{display:block;margin:0 0 14px auto;border:1px solid #bbcbd3;border-radius:7px;background:white;padding:8px 15px;color:var(--ink);font:inherit;font-size:12px;cursor:pointer}.print-button:focus-visible{outline:3px solid var(--teal);outline-offset:3px}
+    @media(max-width:720px){main{margin:16px auto;padding:0 12px 24px}header{padding:28px 24px}h1{font-size:28px}.body{padding:26px 22px}.stats{gap:8px}.stat{padding:12px}.amount{font-size:25px}.cards,.split{grid-template-columns:1fr}th,td{padding:11px;min-width:95px}footer{display:block}}
+    @media print{@page{size:A4;margin:14mm}body{background:white;font-size:10pt}main{max-width:none;margin:0;padding:0}.print-button{display:none}header{padding:22px 26px;border-radius:0;print-color-adjust:exact;-webkit-print-color-adjust:exact}h1{font-size:25pt}.body{padding:24px 0 0;box-shadow:none}.stats,.recommendation,.cards,.card,.aside,.callout{break-inside:avoid}section+section{margin-top:24px;padding-top:20px}h2,h3,.section-label{break-after:avoid}table{font-size:9pt}thead{display:table-header-group}tr{break-inside:avoid}th,td{padding:8px}.table-wrap{overflow:visible}a{color:inherit}.budget-bar,.stat.featured,tr.pick td{print-color-adjust:exact;-webkit-print-color-adjust:exact}.note,.sources{font-size:8pt}footer{font-size:8pt}.split{grid-template-columns:1fr}.amount{font-size:25pt}}
+  </style>
+</head>
+<body>
+<main>
+  <button class="print-button" type="button" onclick="window.print()">인쇄 / PDF 저장</button>
+  <header>
+    <p class="eyebrow">HOTEL AD · V2 MODEL STRATEGY</p>
+    <h1>V2 모델 선정 및<br>API 예산 운영 보고서</h1>
+    <p>숙박업 소상공인을 위한 광고 이미지 서비스.<br>대화형 기획서 작성부터 A·B·C 초안 생성까지, 팀 공용 크레딧 안에서 검증하는 실행안.</p>
+    <div class="meta"><span>작성 기준 · 2026.09.16</span><span>대상 · 모델 / 백엔드 / 프런트엔드 팀</span><span class="tag dark">선정 제안 · 성능 실측 전</span></div>
+  </header>
+  <div class="body">
+    <section aria-labelledby="summary">
+      <div class="stats">
+        <div class="stat"><small>학원 제공 · 팀 전체 API 크레딧</small><div class="amount">$30.00</div></div>
+        <div class="stat"><small>기존 사용액 · 사용자 제공</small><div class="amount">$1.06</div></div>
+        <div class="stat featured"><small>남은 예산 · 전체의 약 96.47%</small><div class="amount">$28.94</div></div>
+      </div>
+      <div class="section-label">01 / RECOMMENDATION</div>
+      <h2 id="summary">기본 모델을 정하고, 작은 비교 실험으로 확정</h2>
+      <div class="recommendation"><strong>GPT-4.1 mini + GPT Image 2 Medium + 서버 한글 합성</strong><p>채팅 Agent는 기존 설계의 GPT-4.1 mini로 시작합니다. GPT-5.4 nano를 동일 사례로 비교해 정확도와 지연이 비슷하면 교체합니다. 이미지는 V1 구성을 유지하고, 반복 테스트의 실제 생성 호출을 줄여 예산을 확보합니다.</p></div>
+      <div class="cards">
+        <div class="card"><div class="number">CHAT AGENT</div><h3>정보 추출과 정정 이해</h3><p>LLM은 사용자 의도와 필드 값을 추출합니다. 필수값 검증·단계 이동·완료 판단은 코드로 처리합니다.</p></div>
+        <div class="card"><div class="number">IMAGE GENERATION</div><h3>실제 사진 기반 A·B·C</h3><p>객실·시설 / 분위기·경험 / 장점·메시지를 강조한 PNG 3장을 각각 생성합니다.</p></div>
+        <div class="card"><div class="number">TEXT COMPOSITION</div><h3>확정 문구를 코드로 합성</h3><p>배경 생성 후 한글을 합성합니다. 내부 배치 테스트는 저장된 배경으로 반복할 수 있습니다.</p></div>
+      </div>
+      <p class="note">$30은 고정 토큰 개수가 아닌 API 사용 금액 기준 크레딧으로 계산했습니다. 잔액은 사용자 제공 금액을 바탕으로 하며 계정에서 직접 조회한 값은 아닙니다.</p>
+    </section>
+
+    <section aria-labelledby="chat">
+      <div class="section-label">02 / CHAT MODEL SHORTLIST</div><h2 id="chat">채팅 후보 비교</h2>
+      <p class="muted">단가뿐 아니라 한국어 정정 처리, 필드 추출 정확도, 불필요한 재질문과 응답 시간을 함께 평가합니다. 아래 모델들은 공식 문서상 구조화된 출력을 지원합니다.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th scope="col">모델 · 공식 출처</th><th scope="col">입력 / 출력 단가¹</th><th scope="col">기획서 1건²</th><th scope="col">후보 역할</th></tr></thead>
+        <tbody>
+          <tr class="pick"><td class="model"><a href="https://developers.openai.com/api/docs/models/gpt-4.1-mini">GPT-4.1 mini</a><br><span class="tag">우선 개발</span></td><td class="money">$0.40 / $1.60</td><td class="money">$0.0200</td><td>기존 설계와 일치. 추론 설정 없이 기본 추출·대화 흐름 검증.</td></tr>
+          <tr><td class="model"><a href="https://developers.openai.com/api/docs/models/gpt-5.4-nano">GPT-5.4 nano</a><br><span class="tag">우선 비교</span></td><td class="money">$0.20 / $1.25</td><td class="money">$0.0123</td><td>분류·정보 추출에 초점을 둔 비용 절감 후보. 추론 수준 none부터 평가.</td></tr>
+          <tr><td class="model"><a href="https://developers.openai.com/api/docs/models/gpt-4o-mini">GPT-4o mini</a></td><td class="money">$0.15 / $0.60</td><td class="money">$0.0075</td><td>표 안에서 가장 저렴한 후보. 복합 정정·재확인 처리를 별도 검증.</td></tr>
+          <tr><td class="model"><a href="https://developers.openai.com/api/docs/models/gpt-5.4-mini">GPT-5.4 mini</a></td><td class="money">$0.75 / $4.50</td><td class="money">$0.0450</td><td>작은 모델의 반복 실패 사례를 비교하는 후보. 초기 전체 트래픽 적용은 보류.</td></tr>
+        </tbody>
+      </table></div>
+      <p class="note">¹ 일반 API의 100만 토큰당 USD. ² 기획서당 10회 호출 × 호출당 입력 3,000토큰·출력 500토큰 가정. 캐시 할인·추가 추론 토큰·재시도·세금 제외. 실제 성능 순위나 최종 청구액을 의미하지 않습니다.</p>
+      <div class="callout"><strong>비용 차이의 크기:</strong> 위 가정에서 기획서 100건의 GPT-4.1 mini 비용은 $2.00, GPT-4o mini는 $0.75입니다. 차이는 $1.25이므로 정확도와 재질문 감소를 먼저 확인하는 것이 합리적입니다.</div>
+    </section>
+
+    <section aria-labelledby="image">
+      <div class="section-label">03 / IMAGE MODEL & QUALITY</div><h2 id="image">이미지는 테스트 목적에 따라 품질을 구분</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th scope="col">모델 · 품질</th><th scope="col">출력 1장</th><th scope="col">A·B·C 출력 3장</th><th scope="col">권장 용도</th></tr></thead>
+        <tbody>
+          <tr><td class="model">GPT Image 2 · Low</td><td class="money">$0.006</td><td class="money">$0.018</td><td>실제 API 연결과 응답 처리 확인</td></tr>
+          <tr class="pick"><td class="model">GPT Image 2 · Medium<br><span class="tag">기본값</span></td><td class="money">$0.053</td><td class="money">$0.159</td><td>숙소 보존·구도·광고 품질 검증과 시연</td></tr>
+          <tr><td class="model">GPT Image 2 · High</td><td class="money">$0.211</td><td class="money">$0.633</td><td>최종 품질 비교용 소수 샘플</td></tr>
+          <tr><td class="model">GPT Image 1.5 · Medium</td><td class="money">$0.034</td><td class="money">$0.102</td><td>동일 사진으로 품질 확인 후 판단할 대체 후보</td></tr>
+        </tbody>
+      </table></div>
+      <p class="note">1024×1024 기준 출력 비용이며 원본 이미지와 프롬프트 입력 비용은 별도입니다. 각 초안 호출에서 입력 비용이 발생합니다. 출처: <a href="https://developers.openai.com/api/docs/guides/image-generation#calculating-costs">공식 이미지 생성 비용 안내</a>.</p>
+      <div class="callout"><strong>예산용 가정:</strong> GPT Image 2 Medium 호출당 $0.10을 임시 배정합니다. 공식 고정 단가나 상한이 아닙니다. 최초 10~20장의 실제 사용량으로 보정하며, Low 결과로 Medium의 최종 품질을 평가하지 않습니다.</div>
+    </section>
+
+    <section aria-labelledby="budget">
+      <div class="section-label">04 / BUDGET ALLOCATION</div><h2 id="budget">모델 개발 $13, 통합·시연·예비비 $15.94</h2>
+      <p>남은 금액 전체를 모델 실험에 사용하지 않고, 팀 공용 테스트와 발표를 위한 금액을 먼저 분리합니다.</p>
+      <div class="budget-bar" role="img" aria-label="채팅 개발 3달러, 이미지 개발 10달러, 통합 테스트 5달러, 시연 6달러, 예비비 4.94달러"><span style="width:10.37%"></span><span style="width:34.55%"></span><span style="width:17.28%"></span><span style="width:20.73%"></span><span style="width:17.07%"></span></div>
+      <div class="split">
+        <div class="table-wrap"><table><thead><tr><th scope="col">용도</th><th scope="col">배정액</th></tr></thead><tbody>
+          <tr><td>채팅 후보 비교 및 Agent 개발</td><td class="money">$3.00</td></tr>
+          <tr><td>이미지 프롬프트·A/B/C 품질 개발</td><td class="money">$10.00</td></tr>
+          <tr><td>프런트·백엔드 통합 테스트</td><td class="money">$5.00</td></tr>
+          <tr><td>발표 리허설·최종 시연</td><td class="money">$6.00</td></tr>
+          <tr><td>오류·재시도·팀 공용 예비비</td><td class="money">$4.94</td></tr>
+          <tr class="pick"><td><strong>남은 금액 합계</strong></td><td class="money"><strong>$28.94</strong></td></tr>
+        </tbody></table></div>
+        <aside class="aside"><h3>개발 중 비용 운영 규칙</h3><ul><li>자동 회귀 테스트는 가짜 모델 응답을 사용합니다.</li><li>UI·문구 배치 테스트에는 저장된 이미지를 재사용합니다.</li><li>실제 API 호출은 모델·용도·시도별 사용량을 기록합니다.</li><li>이미지 호출이 불확실하게 끝난 경우 즉시 중복 실행하지 않습니다.</li><li>통합·시연 예산은 모델 개발비와 별도로 관리합니다.</li></ul></aside>
+      </div>
+      <p class="note">이미지당 $0.10 가정에서 이미지 개발비 $10은 약 100회 호출의 계획 규모입니다. 생성 가능 횟수 보장이 아니며, 실패 재시도도 비용에 반영해야 합니다. 배정·중단 정책은 제안이며 계정이나 애플리케이션에 설정된 상태는 아닙니다.</p>
+    </section>
+
+    <section aria-labelledby="evaluation">
+      <div class="section-label">05 / VALIDATION PLAN</div><h2 id="evaluation">약 $0.10의 1차 채팅 비교로 시작</h2>
+      <ol class="steps">
+        <li><div><strong>한국어 테스트 30개를 고정</strong><p>정상 답변, 다중 필드 입력, 이전 값 정정, 삭제, 모호한 답변, 무관한 질문, 재확인 상황을 포함합니다.</p></div></li>
+        <li><div><strong>GPT-4.1 mini와 GPT-5.4 nano를 동일 조건으로 실행</strong><p>같은 스키마·문맥·입력을 사용합니다. 앞의 토큰 가정으로 30회씩 호출하면 약 $0.09675입니다. 실제 비용은 사용량으로 확인합니다.</p></div></li>
+        <li><div><strong>필드 정확도·잘못된 완료 판단·지연을 비교</strong><p>명확한 정정 누락과 잘못된 완료 처리는 우선 수정합니다. 중요 실패 사례에 한해 GPT-5.4 mini를 추가 비교합니다.</p></div></li>
+        <li><div><strong>동일 사진으로 A·B·C Medium 샘플 검증</strong><p>호텔 특징 보존, 광고 방향의 차이, 합성한 한글 문구의 정확성과 가독성을 확인하고 이미지 실제 단가를 보정합니다.</p></div></li>
+        <li><div><strong>통과한 모델·설정을 고정해 통합 테스트</strong><p>정확도가 비슷하면 비용과 지연이 낮은 모델을 선택합니다. 프롬프트 버전과 생성 설정도 함께 기록합니다.</p></div></li>
+      </ol>
+    </section>
+
+    <section aria-labelledby="sources">
+      <div class="section-label">06 / BASIS & LIMITS</div><h2 id="sources">산정 근거와 확인 범위</h2>
+      <p class="muted">공식 문서의 가격·기능과 현재 V1 구조를 바탕으로 한 선정 제안입니다. 한국어 처리 품질, 원본 사진 보존, 실제 지연·사용량은 아직 실측하지 않았습니다. 학원 계정에서 후보 모델 접근이 허용되는지는 호출 전에 확인해야 합니다.</p>
+      <ul class="sources">
+        <li><a href="https://developers.openai.com/api/docs/models/gpt-4.1-mini">GPT-4.1 mini 공식 문서</a> · 초기 후보: <code>gpt-4.1-mini-2025-04-14</code></li>
+        <li><a href="https://developers.openai.com/api/docs/models/gpt-5.4-nano">GPT-5.4 nano 공식 문서</a> · <a href="https://developers.openai.com/api/docs/models/gpt-4o-mini">GPT-4o mini 공식 문서</a> · <a href="https://developers.openai.com/api/docs/models/gpt-5.4-mini">GPT-5.4 mini 공식 문서</a></li>
+        <li><a href="https://developers.openai.com/api/docs/models/gpt-image-2">GPT Image 2 공식 문서</a> · <a href="https://developers.openai.com/api/docs/models/gpt-image-1.5">GPT Image 1.5 공식 문서</a></li>
+        <li><a href="https://developers.openai.com/api/docs/guides/image-generation#calculating-costs">이미지 비용 계산 안내</a> · <a href="https://developers.openai.com/api/docs/pricing">OpenAI API 가격 안내</a></li>
+      </ul>
+      <p class="note">모든 금액은 USD이며 일반 API 기준입니다. 캐시 할인·Batch 할인·세금·별도 인프라 비용을 반영하지 않았습니다. API 가격과 제공 상태는 변경될 수 있습니다. 이번 보고서 작성에는 서비스의 유료 모델 생성 API를 호출하지 않았습니다.</p>
+    </section>
+    <footer><span>HOTEL AD · V2 / MODEL SELECTION REPORT</span><span>팀 공용 크레딧 기준 · 2026.09.16</span></footer>
+  </div>
+</main>
+</body>
+</html>

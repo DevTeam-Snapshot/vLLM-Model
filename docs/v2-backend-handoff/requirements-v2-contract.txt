@@ -1,0 +1,7 @@
+# Reproducible V2 stub generation/client tools. Python 3.9+ (project image: 3.12).
+# Generate and run stubs with the same toolchain; upgrade these together.
+grpcio==1.71.0
+grpcio-tools==1.71.0
+grpcio-status==1.71.0
+protobuf==5.29.5
+googleapis-common-protos==1.70.0
