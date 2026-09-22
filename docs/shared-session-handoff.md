@@ -24,7 +24,7 @@
 
 - 채팅 Agent는 상태를 보관하지 않는다. 임시 대화·기획서는 React에서 관리하여 요청마다 전달하고 최종 확정 시 DB에 저장한다. 사진은 업로드 시 저장한다.
 - 질문 순서: 숙소 유형 → 숙소 정보 → 매력·사진 → 광고 대상 → 분위기·색상 → 광고 문구. 유효하게 완료된 단계는 건너뛴다.
-- 한 메시지의 여러 필드 추출, 모호하거나 무관한 답변 재질문, 완성 전 정정·삭제·재확인을 처리한다.
+- 한 번의 질문과 답변에서 현재 항목 하나만 추출하고, 모호하거나 무관한 답변 재질문과 완성 전 정정·삭제·재확인을 처리한다.
 - 숙소 유형: `hotel`, `motel`, `resort`, `pension`, `other`. 그 외 유형은 `other`와 `lodging_type_detail`로 표현한다.
 - 주요 기획서 필드: `lodging_type`, `lodging_type_detail`, `lodging_name`, `location`, `selling_points`, `target_audience`, `mood`, `color_preference`, `ad_copy`.
 - 광고 문구는 직접 입력하거나 AI 후보 최대 3개 중 선택한다.

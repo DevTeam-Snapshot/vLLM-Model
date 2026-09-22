@@ -41,7 +41,7 @@ def explain_error(error):
 def sample_chat_request(session_id):
     return turn_from_domain({
         "request_id": str(uuid4()), "session_id": session_id, "state_revision": 0,
-        "event_type": "user_message", "user_message": "강릉 바다호텔이고 호텔이에요.",
+        "event_type": "user_message", "user_message": "호텔이에요.",
         "current_step": "lodging_type", "brief": {
             "lodging_type": None, "lodging_type_detail": None, "lodging_name": None,
             "location": None, "selling_points": [], "target_audience": None,

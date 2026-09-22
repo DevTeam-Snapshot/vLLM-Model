@@ -19,6 +19,10 @@
 
 ## 모드 구분
 
+한 번의 `ProcessTurn`에서는 현재 질문에 해당하는 정보 하나만 반영합니다. 기존 Proto 단계는 유지하면서 `LODGING_INFORMATION` 안에서 숙소명 다음 지역, `SELLING_POINTS` 안에서 장점 다음 사진, `MOOD` 안에서 분위기 다음 색상을 각각 질문합니다. 같은 단계에 다음 항목이 남아 있으면 `next_step`은 유지되고 `assistant_message`만 다음 세부 질문으로 바뀝니다.
+
+사용자가 한 답변에 여러 정보를 포함해도 현재 질문의 필드만 `brief_updates`에 포함됩니다. 백엔드는 해당 변경을 저장한 뒤 반환된 질문에 대한 다음 답변을 새로운 `ProcessTurn` 요청으로 보내야 합니다.
+
 `fake`는 정해진 JSON 필드 입력, 숙소 유형 단답, 문구 추천·번호 선택·`문구:` 입력만 지원합니다. 일반 한국어 입력은 추출된 것처럼 꾸미지 않고 모호 응답을 반환합니다. 생성 이미지는 원본 사진에 문구를 합성하며 FAKE 표시가 있습니다. API 키나 GPU가 필요하지 않습니다.
 
 `live`는 모델 서비스가 vLLM `/v1/models`, `/tokenize`, `/v1/chat/completions`를 호출하고 이미지 서비스는 OpenAI 이미지 편집 API를 호출합니다. 실제 모델이 요청 JSON Schema와 Qwen non-thinking 옵션을 지원해야 합니다. 통신 실패 시 fake로 대체하지 않습니다.

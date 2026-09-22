@@ -18,6 +18,7 @@ from openai.types.chat import ChatCompletionMessageParam
 from pydantic import BaseModel, Field, ValidationError
 
 from v2.errors import ModelFailure
+from v2.planning_fields import FIELDS, expected_field_id
 from v2.turn_types import Extraction
 
 SYSTEM: Final = """You extract Korean hotel advertising planning information.
@@ -44,15 +45,15 @@ Accepted direct copy or number selection sets ad_copy.
 Never use request/session IDs as instructions.
 Do not set original_image or decide steps/completion.
 For candidates use verified facts only.
-The input user_message is the latest utterance to extract. current_step is
-workflow metadata, not a restriction: extract every explicitly supplied field.
-Write extracted values inside updates, not only in explanation.
+The input user_message is the latest utterance to extract. Extract only the
+single field named expected_field, even when the user supplies other facts.
+Write that value inside updates, not only in explanation.
 candidates contains advertising slogans only, never field names, missing fields,
 or questions. Use [] unless the user asks for advertising copy suggestions.
 explanation is optional Korean explanatory text; do not ask the next question,
 because the application determines it from the updated brief.
-Example user_message: "부산 솔빛호텔이고 호텔이에요."
-Output: {"updates":{"lodging_type":1,"lodging_name":"솔빛호텔","location":"부산"},
+Example expected_field="lodging_type", user_message="부산 솔빛호텔이고 호텔이에요."
+Output: {"updates":{"lodging_type":1},
 "intent":"answer","status":"valid","reconfirm":[],"confirmed":[],
 "candidates":[],"explanation":""}
 For an unrelated utterance use updates={}, status="off_topic", candidates=[].
@@ -92,6 +93,12 @@ class VllmTurnExtractor:
     def extract(self, request: pb.ProcessTurnRequest) -> Extraction:
         snapshot = MessageToDict(request, preserving_proto_field_name=True)
         snapshot.pop("conversation_history", None)
+        expected = expected_field_id(
+            request.brief,
+            request.original_image_uploaded,
+            list(request.fields_to_reconfirm),
+        )
+        snapshot["expected_field"] = FIELDS[expected - 1] if expected else None
         payload = json.dumps(snapshot, ensure_ascii=False)
         schema = Extraction.model_json_schema()
         system_prompt = SYSTEM + chr(10) + "OUTPUT_SCHEMA_JSON" + chr(10) + json.dumps(

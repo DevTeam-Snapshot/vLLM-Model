@@ -11,24 +11,26 @@ from v2.planning_fields import (
     FIELD_IDS,
     FIELDS,
     STEPS,
+    expected_field_id,
     missing_fields,
     required_fields,
     validate_brief,
 )
-from v2.turn_types import Extraction, TurnExtractor
+from v2.turn_types import Extraction, TurnExtractor, Updates
 
 QUESTIONS = (
     "숙소 유형을 알려주세요.",
-    "숙소 이름과 지역을 알려주세요.",
-    "숙소 장점을 알려주시고 사진을 업로드해 주세요.",
+    "기타 숙소 유형을 구체적으로 알려주세요.",
+    "숙소 이름을 알려주세요.",
+    "숙소가 있는 지역을 알려주세요.",
+    "숙소의 가장 큰 장점을 알려주세요.",
+    "광고에 사용할 숙소 사진을 업로드해 주세요.",
     "어떤 고객에게 광고할까요?",
-    "원하는 분위기와 색상을 알려주세요. 선호가 없으면 위임할 수 있어요.",
-    (
-        "문구를 입력하거나 추천받으세요. "
-        "마지막 필수 입력이 확정되면 기획서는 읽기 전용으로 전환됩니다."
-    ),
-    "기획서가 완성되었습니다. 이제 광고 이미지를 생성할 수 있습니다.",
+    "원하는 광고 분위기를 알려주세요.",
+    "원하는 색상을 알려주세요. 선호가 없으면 위임할 수 있어요.",
+    "광고 문구를 입력하거나 추천받으세요.",
 )
+COMPLETE_MESSAGE = "기획서가 완성되었습니다. 이제 광고 이미지를 생성할 수 있습니다."
 
 
 def validate_request(request: pb.ProcessTurnRequest) -> None:
@@ -86,6 +88,22 @@ class PlanningEngine:
         validate_request(request)
         extraction = (
             Extraction() if request.event_type == 2 else self.extractor.extract(request)
+        )
+        expected = expected_field_id(
+            request.brief,
+            request.original_image_uploaded,
+            list(request.fields_to_reconfirm),
+        )
+        allowed = FIELDS[expected - 1] if expected and expected != 6 else None
+        supplied = extraction.updates.model_dump(exclude_unset=True)
+        selected = {allowed: supplied[allowed]} if allowed in supplied else {}
+        extraction = extraction.model_copy(
+            update={
+                "updates": Updates.model_validate(selected),
+                "confirmed": [name for name in extraction.confirmed if name == allowed],
+                "reconfirm": [name for name in extraction.reconfirm if name == allowed],
+                "candidates": extraction.candidates if expected == 10 else [],
+            }
         )
         copy = extraction.updates.ad_copy
         if copy:
@@ -178,6 +196,9 @@ class PlanningEngine:
             else pb.PLANNING_STEP_COMPLETE
         )
         next_step = STEPS[min(reconfirm) - 1] if reconfirm else natural_step
+        next_field = min(reconfirm) if reconfirm else (
+            natural_missing[0] if natural_missing else None
+        )
         response = pb.ProcessTurnResponse(
             request_id=request.request_id,
             session_id=request.session_id,
@@ -195,7 +216,7 @@ class PlanningEngine:
             assistant_message=(
                 extraction.explanation + " " if extraction.explanation else ""
             )
-            + QUESTIONS[next_step - 1],
+            + (QUESTIONS[next_field - 1] if next_field else COMPLETE_MESSAGE),
             brief_updates=patch,
             corrected_fields=sorted(set(corrected)),
             fields_to_reconfirm=sorted(reconfirm),

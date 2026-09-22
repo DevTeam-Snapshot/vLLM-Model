@@ -133,6 +133,7 @@ def test_live_request_routes_schema_and_non_thinking_parameters() -> None:
     snapshot = json.loads(chat_body["messages"][-1]["content"])
     assert snapshot["session_id"] == "payload-check"
     assert snapshot["user_message"] == given.user_message
+    assert snapshot["expected_field"] == "lodging_type"
     response_format = chat_body["response_format"]
     assert response_format["type"] == "json_schema"
     schema = response_format["json_schema"]["schema"]

@@ -96,6 +96,17 @@ def missing_fields(
     return missing
 
 
+def expected_field_id(
+    brief: pb.AdvertisementBrief,
+    image_uploaded: bool,
+    fields_to_reconfirm: list[pb.BriefField],
+) -> pb.BriefField | None:
+    if fields_to_reconfirm:
+        return min(fields_to_reconfirm)
+    missing = missing_fields(brief, image_uploaded)
+    return missing[0] if missing else None
+
+
 def require_complete(brief: pb.AdvertisementBrief) -> None:
     validate_brief(brief)
     if missing_fields(brief, True):

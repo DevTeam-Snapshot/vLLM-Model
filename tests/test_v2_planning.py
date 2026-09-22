@@ -80,6 +80,8 @@ def test_deletion_when_required_value_cleared() -> None:
     given.brief.CopyFrom(full_brief())
     given.original_image_uploaded = True
     given.current_step = 6
+    given.fields_to_reconfirm.append(pb.BRIEF_FIELD_LOCATION)
+    given.resume_step = pb.PLANNING_STEP_AD_COPY
     actual = PlanningEngine().process(given)
     assert actual.next_step == 2 and 4 in actual.corrected_fields
     assert actual.brief_updates.location.WhichOneof("operation") == "clear"
@@ -89,6 +91,8 @@ def test_candidates_invalidated_when_fact_changes() -> None:
     given = request('{"location":"서울"}')
     given.brief.CopyFrom(full_brief())
     given.ad_copy_candidates.append("강릉에서 쉬어요")
+    given.fields_to_reconfirm.append(pb.BRIEF_FIELD_LOCATION)
+    given.resume_step = pb.PLANNING_STEP_SELLING_POINTS
     actual = PlanningEngine().process(given)
     assert not actual.ad_copy_candidates
 
@@ -98,6 +102,8 @@ def test_copy_reconfirmation_when_fact_changes() -> None:
     given.brief.CopyFrom(full_brief())
     given.brief.ad_copy = "강릉에서 쉬어요"
     given.original_image_uploaded = True
+    given.fields_to_reconfirm.append(pb.BRIEF_FIELD_LOCATION)
+    given.resume_step = pb.PLANNING_STEP_AD_COPY
     actual = PlanningEngine().process(given)
     assert list(actual.fields_to_reconfirm) == [10] and not actual.is_complete
     assert actual.resume_step == 6
@@ -133,6 +139,8 @@ def test_return_to_missing_step_when_reconfirmation_resolves() -> None:
 def test_list_replacement_when_points_deleted() -> None:
     given = request('{"selling_points":[]}')
     given.brief.CopyFrom(full_brief())
+    given.fields_to_reconfirm.append(pb.BRIEF_FIELD_SELLING_POINTS)
+    given.resume_step = pb.PLANNING_STEP_SELLING_POINTS
     actual = PlanningEngine().process(given)
     assert actual.brief_updates.HasField("selling_points")
     assert 5 in actual.corrected_fields and 5 in actual.missing_fields
@@ -143,6 +151,8 @@ def test_points_corrected_when_list_replaced() -> None:
     given.brief.CopyFrom(full_brief())
     given.brief.ad_copy = "객실에서 쉬세요"
     given.ad_copy_candidates.append("객실에서 쉬세요")
+    given.fields_to_reconfirm.append(pb.BRIEF_FIELD_SELLING_POINTS)
+    given.resume_step = pb.PLANNING_STEP_SELLING_POINTS
     actual = PlanningEngine().process(given)
     assert 5 in actual.corrected_fields and 10 in actual.fields_to_reconfirm
     assert not actual.ad_copy_candidates
@@ -168,6 +178,46 @@ class InventCopyExtractor:
 
 def test_output_rejected_when_model_invents_final_copy() -> None:
     given = request("추천해줘")
+    given.brief.CopyFrom(full_brief())
+    given.original_image_uploaded = True
+    given.current_step = pb.PLANNING_STEP_AD_COPY
     with pytest.raises(ModelFailure) as error:
         PlanningEngine(InventCopyExtractor()).process(given)
     assert error.value.reason == "MODEL_OUTPUT_INVALID"
+
+
+class MultiFieldExtractor:
+    def healthy(self) -> bool:
+        return True
+
+    def extract(self, request: pb.ProcessTurnRequest) -> Extraction:
+        return Extraction(
+            updates=Updates(
+                lodging_type=1,
+                lodging_name="바다호텔",
+                location="강릉",
+            )
+        )
+
+
+def test_only_current_question_field_applied_when_model_returns_multiple() -> None:
+    given = request("강릉 바다호텔이고 호텔이에요")
+
+    actual = PlanningEngine(MultiFieldExtractor()).process(given)
+
+    assert actual.brief_updates.lodging_type.set_value == 1
+    assert not actual.brief_updates.HasField("lodging_name")
+    assert not actual.brief_updates.HasField("location")
+    assert actual.next_step == pb.PLANNING_STEP_LODGING_INFORMATION
+
+
+def test_same_step_continues_with_next_single_field() -> None:
+    given = request("바다호텔이고 강릉에 있어요")
+    given.brief.lodging_type = pb.LODGING_TYPE_HOTEL
+    given.current_step = pb.PLANNING_STEP_LODGING_INFORMATION
+
+    actual = PlanningEngine(MultiFieldExtractor()).process(given)
+
+    assert actual.brief_updates.lodging_name.set_value == "바다호텔"
+    assert not actual.brief_updates.HasField("location")
+    assert actual.next_step == pb.PLANNING_STEP_LODGING_INFORMATION

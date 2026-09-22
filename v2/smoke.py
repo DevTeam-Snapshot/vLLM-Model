@@ -37,36 +37,40 @@ def main() -> None:
             .healthy
         )
         brief = pb.AdvertisementBrief()
-        updates = {
-            "lodging_type": 1,
-            "lodging_name": "바다호텔",
-            "location": "강릉",
-            "selling_points": ["오션뷰 객실"],
-            "target_audience": "커플",
-            "mood": "차분함",
-            "color_preference": "auto",
-        }
-        response = planning.ProcessTurn(
-            pb.ProcessTurnRequest(
-                request_id="smoke-chat-1",
-                session_id="smoke",
-                state_revision=0,
-                event_type=pb.TURN_EVENT_TYPE_USER_MESSAGE,
-                user_message=json.dumps(updates, ensure_ascii=False),
-                current_step=pb.PLANNING_STEP_LODGING_TYPE,
-                brief=brief,
-                original_image_uploaded=True,
-            ),
-            timeout=30,
+        turns = (
+            ("lodging_type", 1, pb.PLANNING_STEP_LODGING_TYPE),
+            ("lodging_name", "바다호텔", pb.PLANNING_STEP_LODGING_INFORMATION),
+            ("location", "강릉", pb.PLANNING_STEP_LODGING_INFORMATION),
+            ("selling_points", ["오션뷰 객실"], pb.PLANNING_STEP_SELLING_POINTS),
+            ("target_audience", "커플", pb.PLANNING_STEP_TARGET_AUDIENCE),
+            ("mood", "차분함", pb.PLANNING_STEP_MOOD),
+            ("color_preference", "auto", pb.PLANNING_STEP_MOOD),
         )
-        assert response.state_revision == 0 and not response.is_complete
+        for revision, (field, value, step) in enumerate(turns):
+            response = planning.ProcessTurn(
+                pb.ProcessTurnRequest(
+                    request_id=f"smoke-chat-{revision + 1}",
+                    session_id="smoke",
+                    state_revision=revision,
+                    event_type=pb.TURN_EVENT_TYPE_USER_MESSAGE,
+                    user_message=json.dumps({field: value}, ensure_ascii=False),
+                    current_step=step,
+                    brief=brief,
+                    original_image_uploaded=True,
+                ),
+                timeout=30,
+            )
+            assert response.state_revision == revision and not response.is_complete
+            if field == "selling_points":
+                brief.selling_points.extend(value)
+            else:
+                setattr(brief, field, value)
         assert response.next_step == pb.PLANNING_STEP_AD_COPY
-        brief = pb.AdvertisementBrief(**updates)
         accepted = planning.ProcessTurn(
             pb.ProcessTurnRequest(
-                request_id="smoke-chat-2",
+                request_id="smoke-chat-8",
                 session_id="smoke",
-                state_revision=1,
+                state_revision=7,
                 event_type=pb.TURN_EVENT_TYPE_USER_MESSAGE,
                 user_message="문구: 바다와 함께하는 둘만의 하루",
                 current_step=pb.PLANNING_STEP_AD_COPY,
@@ -172,7 +176,8 @@ def main() -> None:
         else:
             raise AssertionError("Server accepted a message over 32MiB")
     print(
-        "PASS: V1/V2 health, two planning turns, six 1024 PNG drafts, structured error. FAKE mode; no paid calls."
+        "PASS: V1/V2 health, sequential planning turns, six 1024 PNG drafts, "
+        "structured error. FAKE mode; no paid calls."
     )
     print(f"Images: {output.resolve()}")
 
