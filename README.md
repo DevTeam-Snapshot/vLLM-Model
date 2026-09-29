@@ -29,7 +29,7 @@ GCP의 live 구성은 같은 Docker 네트워크에 `vllm` 컨테이너를 함�
 MODEL_MODE=live docker compose -f docker-compose.grpc.yml up --build -d
 ```
 
-백엔드는 같은 네트워크에서 `llm-service:50051`을 호출합니다. 네트워크는 백엔드에서 먼저 생성되어 있어야 하며, V2 이미지에는 API 키가 필요하지 않습니다. 기존 V1 이미지 API를 사용할 때만 `OPENAI_API_KEY`가 필요합니다.
+백엔드는 같은 네트워크에서 `llm-service:50051`을 호출합니다. 네트워크는 백엔드에서 먼저 생성되어 있어야 합니다. **V2 live 이미지에도 `OPENAI_API_KEY`가 필요합니다.** OpenAI는 사진을 분석해 자르기 중심·문구 위치·자동 후보 비율을 선택하고, 실제 픽셀 보정과 문구 합성은 로컬에서 처리합니다. [Git push부터 SSH live 테스트까지](docs/v2-live-deployment.md)를 따라 실행하세요.
 
 ## Docker 없는 로컬 검증
 
@@ -61,4 +61,4 @@ Linux에서는 실행 파일 경로를 `.venv-v2/bin/python`으로 바꿉니다.
 - [GCP GPU 확인 자료](docs/v2-gpu-environment.md)
 - [라이선스를 포함한 한글 폰트](assets/fonts/README.md)
 
-출력은 사진 위에 숙소명·확정 문구가 합성된 PNG bytes입니다. 1번은 원본 비율(긴 변 1024), 2번은 1024×1024 중앙 자르기, 3번은 잘리는 면적이 15% 이하일 때 정사각형을 선택합니다. 저장 경로·URL·DB는 모델 서버가 관리하지 않습니다. V2는 외부 이미지 생성 API를 호출하지 않으며 HealthCheck는 로컬 폰트 준비 상태를 검사합니다. V1 유료 이미지 생성 경로는 유지됩니다.
+출력은 사진 위에 숙소명·확정 문구가 합성된 PNG bytes입니다. 1번은 원본 비율(긴 변 1024), 2번은 1024×1024 자르기, 3번은 OpenAI가 원본 비율 또는 정사각형을 추천합니다. 저장 경로·URL·DB는 모델 서버가 관리하지 않습니다. V2 live는 OpenAI Vision 분석을 호출하며 사진을 다시 생성하지 않습니다. HealthCheck는 폰트·키 설정을 확인하며 실제 OpenAI 인증·호출 성공은 `v2.live_check`로 확인합니다. V1 이미지 생성 경로는 유지됩니다.

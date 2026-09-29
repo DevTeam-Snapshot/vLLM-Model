@@ -17,3 +17,7 @@ class Settings(BaseSettings):
     vllm_api_key: SecretStr = SecretStr("EMPTY")
     vllm_context_tokens: int = Field(default=12288, ge=2048, le=131072)
     vllm_timeout_seconds: float = Field(default=25, gt=0, le=25)
+    openai_api_key: SecretStr = SecretStr("")
+    openai_base_url: str = "https://api.openai.com/v1"
+    openai_vision_model: str = "gpt-4.1-mini"
+    openai_vision_timeout_seconds: float = Field(default=60, gt=0, le=120)

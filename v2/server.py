@@ -57,7 +57,7 @@ def run() -> None:
             )
         )
     )
-    draft = DraftEngine(fake=fake)
+    draft = DraftEngine(fake=fake, settings=settings)
     with ThreadPoolExecutor(max_workers=12) as pool:
         server = grpc.server(pool, options=CHANNEL_OPTIONS)
         register_services(server, planning, draft)

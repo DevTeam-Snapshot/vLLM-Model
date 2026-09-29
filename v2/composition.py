@@ -6,10 +6,12 @@ from pathlib import Path
 from typing import Final
 
 import grpc
-from PIL import Image, ImageDraw, ImageFont, ImageOps
+from PIL import Image, ImageDraw, ImageFont
+from PIL.PngImagePlugin import PngInfo
 
 from v2.errors import ModelFailure
 from v2.image_validation import MAX_BYTES
+from v2.layout import LayoutAdvice
 
 FONT_PATH: Final = Path(__file__).resolve().parents[1] / "assets/fonts/NotoSansKR.ttf"
 
@@ -21,6 +23,7 @@ class Composition:
     direction: int
     generation_round: int
     fake: bool = False
+    layout: LayoutAdvice | None = None
 
 
 def wrap_text(text: str, font: ImageFont.FreeTypeFont, width: int) -> list[str]:
@@ -67,8 +70,22 @@ def uses_square(image: Image.Image, direction: int) -> bool:
 
 def compose(image: Image.Image, spec: Composition) -> bytes:
     try:
-        if uses_square(image, spec.direction):
-            canvas = ImageOps.fit(image, (1024, 1024), method=Image.Resampling.LANCZOS)
+        square = uses_square(image, spec.direction)
+        if spec.layout is not None and spec.direction == 3:
+            square = spec.layout.output_format == "square"
+        if square:
+            focus_x = spec.layout.focus_x if spec.layout is not None else 0.5
+            focus_y = spec.layout.focus_y if spec.layout is not None else 0.5
+            side = min(image.size)
+            left = round(
+                max(0, min(image.width - side, image.width * focus_x - side / 2))
+            )
+            upper = round(
+                max(0, min(image.height - side, image.height * focus_y - side / 2))
+            )
+            canvas = image.crop((left, upper, left + side, upper + side)).resize(
+                (1024, 1024), Image.Resampling.LANCZOS
+            )
         else:
             scale = 1024 / max(image.size)
             size = (
@@ -81,11 +98,15 @@ def compose(image: Image.Image, spec: Composition) -> bytes:
             8, round(min(width, height) * (0.06 + 0.015 * (spec.direction - 1)))
         )
         top = (spec.direction + spec.generation_round) % 2 == 0
+        opacity = 190 / 255
+        if spec.layout is not None:
+            top = spec.layout.text_position.startswith("top")
+            opacity = spec.layout.overlay_opacity
         overlay_height = round(height * 0.44)
         overlay = Image.new("RGBA", canvas.size)
         shade = ImageDraw.Draw(overlay)
         for offset in range(overlay_height):
-            alpha = round(190 * (1 - offset / overlay_height) ** 0.7)
+            alpha = round(255 * opacity * (1 - offset / overlay_height) ** 0.7)
             y = offset if top else height - 1 - offset
             shade.line((0, y, width, y), fill=(12, 20, 24, alpha))
         canvas = Image.alpha_composite(canvas.convert("RGBA"), overlay).convert("RGB")
@@ -95,6 +116,10 @@ def compose(image: Image.Image, spec: Composition) -> bytes:
         text_width = width - 2 * inset
         if spec.direction == 3:
             text_width = round(text_width * 0.82)
+        if spec.layout is not None:
+            text_width = round(text_width * 0.84)
+            if spec.layout.text_position.endswith("right"):
+                inset = width - inset - text_width
         draw.rectangle((inset, text_y, inset + 50, text_y + 3), fill="#e7ce96")
         name_height = round(content_height * 0.48)
         copy_y = text_y + 14 + name_height
@@ -118,7 +143,12 @@ def compose(image: Image.Image, spec: Composition) -> bytes:
                 anchor="rm",
             )
         output = BytesIO()
-        canvas.save(output, format="PNG")
+        metadata = PngInfo()
+        metadata.add_text(
+            "layout_provider", "openai" if spec.layout is not None else "local"
+        )
+        metadata.add_text("output_format", "square" if square else "original")
+        canvas.save(output, format="PNG", pnginfo=metadata)
         data = output.getvalue()
         if len(data) > MAX_BYTES:
             raise ModelFailure("OUTPUT_TOO_LARGE", grpc.StatusCode.INTERNAL)

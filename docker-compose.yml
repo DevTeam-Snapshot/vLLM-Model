@@ -16,5 +16,8 @@ services:
       VLLM_CONTEXT_TOKENS: ${VLLM_CONTEXT_TOKENS:-12288}
       VLLM_TIMEOUT_SECONDS: ${VLLM_TIMEOUT_SECONDS:-25}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      OPENAI_VISION_MODEL: ${OPENAI_VISION_MODEL:-gpt-4.1-mini}
+      OPENAI_VISION_TIMEOUT_SECONDS: ${OPENAI_VISION_TIMEOUT_SECONDS:-60}
     extra_hosts:
       - "host.docker.internal:host-gateway"

@@ -209,7 +209,7 @@ message GenerateDraftResponse {
   DraftDirection direction = 5;
   bytes image_bytes = 6; // PNG with overlaid Korean copy, <=25 MiB.
   // Original ratio: longest edge 1024, other edge rounded to nearest pixel.
-  // Square: 1024x1024 center crop. Auto: square only if retained area >=85%.
+  // Live: Vision selects crop focus and auto format. Fake: deterministic local layout.
   string image_mime_type = 7; // Always image/png.
 }
 

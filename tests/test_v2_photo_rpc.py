@@ -3,18 +3,28 @@ from io import BytesIO
 
 import grpc
 import hotel_ad_v2_pb2_grpc as rpc
+import pytest
 from google.protobuf import empty_pb2
 from PIL import Image
 from test_v2_draft import request
+from test_v2_draft_provider import provider
+from test_v2_vision import vision_reply
 
 from v2.draft import DraftEngine
 from v2.planning import PlanningEngine
 from v2.services import register_services
 
 
-def test_live_photo_candidates_when_called_over_grpc() -> None:
+def test_live_photo_candidates_when_called_over_grpc(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     # Given: a real loopback gRPC listener with production local image processing.
-    with ThreadPoolExecutor(max_workers=2) as pool:
+    with (
+        provider(vision_reply()) as (url, received),
+        ThreadPoolExecutor(max_workers=2) as pool,
+    ):
+        monkeypatch.setenv("OPENAI_API_KEY", "local-test-only")
+        monkeypatch.setenv("OPENAI_BASE_URL", url)
         server = grpc.server(pool)
         register_services(server, PlanningEngine(), DraftEngine())
         port = server.add_insecure_port("127.0.0.1:0")
@@ -38,9 +48,10 @@ def test_live_photo_candidates_when_called_over_grpc() -> None:
                         assert result.draft_id == given.draft_id
                         with Image.open(BytesIO(result.image_bytes)) as photo:
                             assert photo.size == (
-                                (1024, 1024) if direction == 2 else (1024, 768)
+                                (1024, 768) if direction == 1 else (1024, 1024)
                             )
                         outputs.append(result.image_bytes)
-                assert len(set(outputs)) == 6
+                assert len(set(outputs)) == 3
+                assert len(received) == 6
         finally:
             server.stop(0).wait()

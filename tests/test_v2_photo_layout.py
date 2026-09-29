@@ -1,11 +1,13 @@
 from io import BytesIO
 
+import grpc
 import pytest
 from PIL import Image, ImageChops, ImageDraw
 from test_v2_draft import request
 
 from v2.composition import Composition, compose
 from v2.draft import DraftEngine
+from v2.errors import ModelFailure
 
 
 @pytest.mark.parametrize(
@@ -53,14 +55,18 @@ def test_photo_reaches_edges_when_copy_is_overlaid() -> None:
         )
 
 
-def test_live_draft_needs_no_image_provider_when_photo_is_local() -> None:
+def test_live_draft_requires_vision_configuration(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     # Given: live mode with no API key.
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     engine = DraftEngine()
     # When: the validated photo is rendered.
-    result = engine.generate(request())
-    # Then: local readiness and a real PNG do not depend on an image API.
-    assert engine.healthy()
-    assert result.image_bytes.startswith(b"\x89PNG")
+    with pytest.raises(ModelFailure) as failure:
+        engine.generate(request())
+    # Then: live requests cannot silently use offline layouts.
+    assert not engine.healthy()
+    assert failure.value.code == grpc.StatusCode.UNAVAILABLE
 
 
 def test_square_keeps_scale_when_cropping_a_wide_photo() -> None:
@@ -90,7 +96,7 @@ def test_copy_fits_all_candidates_when_at_contract_limits(
     stream = BytesIO()
     Image.new("RGB", size, "#789999").save(stream, "PNG")
     given.original_image_bytes = stream.getvalue()
-    engine = DraftEngine()
+    engine = DraftEngine(fake=True)
     results: set[bytes] = set()
     # When: every candidate is generated in both rounds.
     for direction in (1, 2, 3):

@@ -1,26 +1,35 @@
 """Validate V2 drafts and render corrected source photos locally."""
 
+from logging import getLogger
+
 import grpc
 import hotel_ad_v2_pb2 as pb
 from PIL import ImageFont
 
 from v2.composition import FONT_PATH, Composition, compose
+from v2.config import Settings
 from v2.errors import ModelFailure
 from v2.image_validation import decode_image
 from v2.photo_correction import correct_photo
 from v2.planning_fields import require_complete
+from v2.vision import OpenAILayoutPlanner
+
+logger = getLogger(__name__)
 
 
 class DraftEngine:
-    def __init__(self, *, fake: bool = False) -> None:
+    def __init__(self, *, fake: bool = False, settings: Settings | None = None) -> None:
         self.fake = fake
+        self.planner = OpenAILayoutPlanner(
+            settings if settings is not None else Settings()
+        )
 
     def healthy(self) -> bool:
         try:
             ImageFont.truetype(str(FONT_PATH), 24)
         except OSError:
             return False
-        return True
+        return self.fake or self.planner.healthy()
 
     def generate(self, request: pb.GenerateDraftRequest) -> pb.GenerateDraftResponse:
         if not all(
@@ -41,6 +50,16 @@ class DraftEngine:
         require_complete(request.brief)
         image = decode_image(request.original_image_bytes, request.image_mime_type)
         image = correct_photo(image)
+        layout = None if self.fake else self.planner.plan(image, request)
+        if layout is not None:
+            logger.info(
+                "openai_layout_applied candidate=%s round=%s model=%s recommended_format=%s position=%s",
+                request.direction,
+                request.generation_round,
+                self.planner.settings.openai_vision_model,
+                layout.output_format,
+                layout.text_position,
+            )
         result = compose(
             image,
             Composition(
@@ -49,6 +68,7 @@ class DraftEngine:
                 request.direction,
                 request.generation_round,
                 self.fake,
+                layout,
             ),
         )
         return pb.GenerateDraftResponse(

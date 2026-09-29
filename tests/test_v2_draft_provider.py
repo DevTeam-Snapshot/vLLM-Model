@@ -1,4 +1,4 @@
-"""Guard the V2 local-render boundary against accidental image-provider calls."""
+"""Local HTTP fixture and offline-mode isolation checks."""
 
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -19,6 +19,9 @@ def provider(reply: bytes, status: int = 200) -> Iterator[tuple[str, list[bytes]
 
     class Handler(BaseHTTPRequestHandler):
         def do_POST(self) -> None:
+            if self.path != "/v1/responses":
+                self.send_error(404)
+                return
             received.append(self.rfile.read(int(self.headers["Content-Length"])))
             self.send_response(status)
             self.send_header("Content-Type", "application/json")
@@ -40,15 +43,15 @@ def provider(reply: bytes, status: int = 200) -> Iterator[tuple[str, list[bytes]
 
 
 @pytest.mark.parametrize("status", [200, 400, 429, 500])
-def test_local_render_ignores_provider_when_unavailable(
+def test_offline_render_ignores_provider_when_unavailable(
     status: int, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     # Given: an image API endpoint that would fail or return corrupt output.
     with provider(b'{"data":[{"b64_json":"!bad!"}]}', status) as (url, received):
         monkeypatch.setenv("OPENAI_API_KEY", "local-test-only")
         monkeypatch.setenv("OPENAI_BASE_URL", url)
-        # When: a production draft is generated from its original photo.
-        result = DraftEngine().generate(request())
+        # When: an explicitly offline draft is generated from its original photo.
+        result = DraftEngine(fake=True).generate(request())
     # Then: no photo is sent to the provider, regardless of provider status.
     assert received == []
     with Image.open(BytesIO(result.image_bytes)) as rendered:

@@ -25,9 +25,9 @@
 
 `fake`는 정해진 JSON 필드 입력, 숙소 유형 단답, 문구 추천·번호 선택·`문구:` 입력만 지원합니다. 일반 한국어 입력은 추출된 것처럼 꾸미지 않고 모호 응답을 반환합니다. 생성 이미지는 원본 사진에 문구를 합성하며 FAKE 표시가 있습니다. API 키나 GPU가 필요하지 않습니다.
 
-`live`는 모델 서비스가 vLLM `/v1/models`, `/tokenize`, `/v1/chat/completions`를 호출하고 V2 이미지 서비스는 외부 API 없이 원본 사진을 보정·합성합니다. V1만 기존 OpenAI 이미지 API를 사용합니다. 실제 모델이 요청 JSON Schema와 Qwen non-thinking 옵션을 지원해야 합니다. 통신 실패 시 fake로 대체하지 않습니다.
+`live`는 기획 서비스가 vLLM `/v1/models`, `/tokenize`, `/v1/chat/completions`를 호출합니다. V2 이미지는 OpenAI Vision으로 구도를 분석한 뒤 로컬에서 원본 사진을 보정·합성합니다. 실제 Qwen 모델이 요청 JSON Schema와 non-thinking 옵션을 지원해야 합니다. 통신 실패 시 fake로 대체하지 않습니다. [SSH 배포와 실제 API 테스트](v2-live-deployment.md)를 참조하세요.
 
-두 모드 모두 gRPC 규격과 상태 처리 코드를 공유합니다. fake 테스트 성공은 한국어 모델 정확도나 이미지 생성 품질의 증거가 아닙니다. V2 이미지가 외부 이미지 API를 호출하지 않는지는 로컬 HTTP 서버로 검증합니다.
+두 모드 모두 gRPC 규격과 상태 처리 코드를 공유합니다. fake 테스트 성공은 한국어 모델 정확도나 사진 품질의 증거가 아닙니다. 로컬 HTTP 제공자를 사용하는 통합 테스트는 SDK와 실제 gRPC 서버 경로를 검증하며 외부 API의 실제 인증·품질 검증을 대신하지 않습니다.
 
 ## 환경변수
 
@@ -43,10 +43,13 @@
 | VLLM_CONTEXT_TOKENS | 12288 | 실제 vLLM max-model-len과 일치시킬 전체 문맥 한도 |
 | VLLM_GPU_MEMORY_UTILIZATION | 0.80 | Qwen3-4B와 12,288토큰 문맥을 위한 L4 GPU 메모리 사용 한도 |
 | VLLM_TIMEOUT_SECONDS | 25 | 토큰 계산과 추론 요청에 사용되는 시간 예산, 최대 25 |
-| OPENAI_API_KEY | 빈 값 | 기존 V1 live 이미지 전용. V2에는 불필요 |
+| OPENAI_API_KEY | 빈 값 | V2 live 사진 분석 및 V1 이미지 API 인증 |
+| OPENAI_BASE_URL | https://api.openai.com/v1 | OpenAI API 주소 |
+| OPENAI_VISION_MODEL | gpt-4.1-mini | 이미지 입력과 구조화 출력을 지원하는 분석 모델 |
+| OPENAI_VISION_TIMEOUT_SECONDS | 60 | 분석 호출 제한 시간, 최대 120초, 자동 재시도 없음 |
 | BACKEND_DOCKER_NETWORK | fastapi-backend_default | 백엔드 연결용 compose에서만 사용 |
 
-V2 이미지는 로컬 처리이며 원본 비율(긴 변 1024) 또는 1024×1024 PNG를 반환합니다. 서버는 요청·회차를 저장하지 않으므로 백엔드의 중복 방지와 결과 재사용이 필요합니다.
+V2 이미지는 live에서 OpenAI 분석 후 로컬 합성하며 원본 비율(긴 변 1024) 또는 1024×1024 PNG를 반환합니다. 서버는 요청·회차를 저장하지 않으므로 백엔드의 중복 방지와 결과 재사용이 필요합니다.
 
 채팅 문맥은 실제 vLLM 토크나이저로 측정합니다. 최근 대화 12개 상한과 8,000토큰 상한을 적용하고 전체 문맥에서 출력·템플릿 여유를 남겨 오래된 기록부터 줄입니다. 최대 출력은 1,536토큰, 예약 공간은 2,048토큰입니다. 실제 템플릿·GPU 설정은 GCP에서 검증해야 합니다.
 
@@ -56,7 +59,7 @@ V2 이미지는 로컬 처리이며 원본 비율(긴 변 1024) 또는 1024×102
 
 - fake 채팅: 로컬 엔진 준비 상태.
 - live 채팅: 유료 생성 없이 vLLM 모델 목록에서 설정한 모델 존재 확인.
-- V2 이미지: 한글 폰트 로딩 가능 여부. 이미지 API 키·GPU 없이 로컬 보정·합성합니다.
+- V2 이미지: 한글 폰트 로딩, live에서는 OpenAI 키·모델 이름 설정 확인. 실제 인증과 모델 접근은 `python -m v2.live_check`로 확인합니다.
 - 이미지 장애가 채팅 상태를 바꾸지 않도록 서비스별 응답을 사용합니다. Docker healthcheck는 두 서비스가 모두 준비됐을 때 성공합니다.
 
 ## 검증 명령
