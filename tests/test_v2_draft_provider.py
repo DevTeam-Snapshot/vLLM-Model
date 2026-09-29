@@ -55,5 +55,5 @@ def test_offline_render_ignores_provider_when_unavailable(
     # Then: no photo is sent to the provider, regardless of provider status.
     assert received == []
     with Image.open(BytesIO(result.image_bytes)) as rendered:
-        assert rendered.size == (1024, 768)
+        assert rendered.size == (1080, 1350)
         assert rendered.format == "PNG"

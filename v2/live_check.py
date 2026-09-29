@@ -125,17 +125,8 @@ def check_live(photo_path: Path, output_root: Path) -> Path:
                         "The server did not use OpenAI. Check its version and MODEL_MODE."
                     )
                 size = rendered.size
-                with Image.open(BytesIO(image_bytes)) as original:
-                    expected = (
-                        round(original.width * 1024 / max(original.size)),
-                        round(original.height * 1024 / max(original.size)),
-                    )
-                if direction == 1 and size != expected:
-                    raise SystemExit("Candidate 1 did not preserve the source ratio.")
-                if direction == 2 and size != (1024, 1024):
-                    raise SystemExit("Candidate 2 is not square.")
-                if direction == 3 and size not in (expected, (1024, 1024)):
-                    raise SystemExit("Candidate 3 has an unexpected ratio.")
+                if size != (1080, 1350):
+                    raise SystemExit("Every candidate must be 1080x1350 (4:5).")
                 rendered.verify()
             with (output / f"candidate-{direction}.png").open("xb") as stream:
                 stream.write(result.image_bytes)

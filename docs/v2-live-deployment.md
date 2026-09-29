@@ -1,6 +1,6 @@
 # Git push → SSH 배포 → live 테스트
 
-V2 live에서 Qwen/vLLM은 기획 대화를 처리합니다. OpenAI는 사진의 자르기 중심, 문구 위치, 그라데이션 농도와 세 번째 후보의 비율을 추천합니다. Pillow는 제한적인 사진 보정과 확정 문구 합성을 수행합니다. OpenAI에 사진을 다시 그리게 하지 않습니다. 1번은 원본 비율, 2번은 정사각형, 3번은 AI 추천입니다.
+V2 live에서 Qwen/vLLM은 기획 대화를 처리합니다. OpenAI는 사진의 자르기 중심, 문구 위치, 그라데이션 농도·색상 팔레트·입력 장점의 강조 순서를 추천합니다. Pillow는 제한적인 사진 보정과 확정 문구 합성을 수행합니다. OpenAI에 사진을 다시 그리게 하지 않습니다. 세 후보 모두 1080×1350이며 감성형·장점 강조형·편집형 템플릿입니다.
 
 ## 1. 로컬 VS Code PowerShell
 
@@ -8,9 +8,9 @@ V2 live에서 Qwen/vLLM은 기획 대화를 처리합니다. OpenAI는 사진의
 
 ```powershell
 git status --short
-git add README.md .env.example docker-compose.yml requirements-v2-server.txt proto/hotel_ad_v2.proto v2 docs tests/test_v2_photo_layout.py tests/test_v2_draft_provider.py tests/test_v2_photo_rpc.py tests/test_v2_vision.py tests/test_v2_vision_composition.py tests/test_v2_live_check.py
+git add README.md proto/hotel_ad_v2.proto v2 docs tests
 git --no-pager diff --cached --stat
-git commit -m "Add OpenAI Vision advertisement layout planning"
+git commit -m "Add truthful portrait advertisement templates"
 git push origin main
 ```
 
@@ -80,9 +80,9 @@ docker compose -f docker-compose.grpc.yml logs --tail=100 llm-service
 
 이 도구는 live 설정과 키를 요구하며 Qwen 기획 요청 1회, OpenAI 분석을 포함한 이미지 요청 3회를 수행합니다. 결과의 `layout_provider=openai` 메타데이터도 검사해 구버전이나 fake 결과를 성공으로 취급하지 않습니다. API 사용량이 발생합니다.
 
-`PASS` 메시지들과 결과 폴더가 출력됩니다. `artifacts/live-check/<실행별 ID>/candidate-1.png`, `candidate-2.png`, `candidate-3.png`를 VS Code에서 열어 확인하세요. 1번은 원본 비율, 2번은 1024×1024, 3번은 둘 중 하나이며 문구는 사진 안에 겹칩니다. 서버 로그에는 `openai_layout_applied`가 남습니다.
+`PASS` 메시지들과 결과 폴더가 출력됩니다. `artifacts/live-check/<실행별 ID>/candidate-1.png`, `candidate-2.png`, `candidate-3.png`를 VS Code에서 열어 확인하세요. 세 장 모두 1080×1350이며 문구·장점·배지는 사진 안에 겹칩니다. 서버 로그에는 `openai_layout_applied`가 남습니다.
 
-401/403이면 키·프로젝트·모델 권한을 확인하고, 429이면 해당 키의 한도·사용량을 확인합니다. 오류 시 fake로 바꾸지 않습니다. 이 검사는 모델 서버 직접 호출이므로 이후 React → Backend 전체 흐름에서도 세 후보를 확인해야 합니다. 백엔드의 고정 정사각형 검증은 제거하고 실제 이미지 크기를 보존해야 합니다.
+401/403이면 키·프로젝트·모델 권한을 확인하고, 429이면 해당 키의 한도·사용량을 확인합니다. 오류 시 fake로 바꾸지 않습니다. 이 검사는 모델 서버 직접 호출이므로 이후 React → Backend 전체 흐름에서도 세 후보를 확인해야 합니다. 백엔드 출력 검증과 React 미리보기를 1080×1350(4:5)에 맞추고, 후보 라벨을 감성형·장점 강조형·편집형으로 변경해야 합니다.
 
 ## 검증 범위와 근거
 

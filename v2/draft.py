@@ -53,11 +53,11 @@ class DraftEngine:
         layout = None if self.fake else self.planner.plan(image, request)
         if layout is not None:
             logger.info(
-                "openai_layout_applied candidate=%s round=%s model=%s recommended_format=%s position=%s",
+                "openai_layout_applied candidate=%s round=%s model=%s palette=%s position=%s",
                 request.direction,
                 request.generation_round,
                 self.planner.settings.openai_vision_model,
-                layout.output_format,
+                layout.palette,
                 layout.text_position,
             )
         result = compose(
@@ -69,6 +69,7 @@ class DraftEngine:
                 request.generation_round,
                 self.fake,
                 layout,
+                tuple(request.brief.selling_points),
             ),
         )
         return pb.GenerateDraftResponse(

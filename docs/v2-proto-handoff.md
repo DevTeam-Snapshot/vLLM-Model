@@ -1,6 +1,6 @@
 # V2 최종 proto 및 백엔드 연동 안내
 
-2026-09-29 변경: [사진 보정·후보별 비율 계약](v2-photo-rendering.md)을 우선 적용합니다. wire 필드는 유지하지만 출력은 정사각형 고정이 아닙니다.
+2026-09-29 변경: [사진 보정·4:5 광고 템플릿 계약](v2-photo-rendering.md)을 우선 적용합니다. wire 필드는 유지하며 모든 후보의 출력은 1080×1350, 4:5 고정입니다.
 
 기준일: 2026-09-16. 백엔드의 계약 동의 및 최종 proto 작성 요청을 반영했습니다.
 
@@ -54,7 +54,7 @@ Python Stub 생성 방식의 공식 설명: [gRPC Python Basics](https://grpc.io
 | 송신·수신 한도 | 각 33,554,432 bytes (32MiB), 전체 메시지 기준 |
 | 원본 업로드 한도 | FastAPI에서 25MiB, 60MP |
 | 모델 전달 입력 | FastAPI 정규화 후 25MiB 이하, 20MP 이하, JPEG/PNG/정적 WebP |
-| 출력 | 합성 완료된 후보별 비율 PNG(원본 비율 긴 변 1024 또는 1024×1024), 25MiB 이하 |
+| 출력 | 합성 완료된 1080×1350 PNG(4:5 고정), 25MiB 이하 |
 
 20MP 초과 원본 축소·EXIF 방향·색상 처리는 FastAPI에서 수행합니다. 모델 서버는 전달 파일을 다시 검증합니다. 포트는 내부망 또는 SSH 터널로 접근하는 기준입니다. 이 문서는 포트를 외부에 공개하거나 컨테이너를 실행하지 않습니다.
 
@@ -213,7 +213,7 @@ PYTHONPATH=generated:examples python -m unittest discover \
   -s tests -p test_v2_contract.py -v
 ```
 
-로컬 loopback 임시 포트를 사용하는 가짜 서버이며 GPU나 OpenAI 키가 필요하지 않습니다. 가짜 이미지는 테스트 코드에서 만드는 후보별 비율 PNG(원본 비율 긴 변 1024 또는 1024×1024)입니다.
+로컬 loopback 임시 포트를 사용하는 가짜 서버이며 GPU나 OpenAI 키가 필요하지 않습니다. 가짜 이미지는 테스트 코드에서 만드는 1080×1350 PNG(4:5 고정)입니다.
 
 검증 결과: 테스트 7개 통과. 내부적으로 채팅 22개, 이미지 6개, 구조화 오류 8개를 실제 로컬 gRPC로 왕복 검증했고 async 클라이언트의 health/chat/image 모드도 확인했습니다. patch 유지·설정·삭제·빈 배열, revision=0·false presence 보존, 오래된 응답 거부와 숙소 enum도 확인했습니다. V1/V2 proto 동시 컴파일도 통과했습니다.
 

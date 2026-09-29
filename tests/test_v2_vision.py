@@ -32,7 +32,8 @@ def vision_reply() -> bytes:
                             "annotations": [],
                             "text": json.dumps(
                                 {
-                                    "output_format": "square",
+                                    "palette": "ocean",
+                                    "selling_point_indices": [0],
                                     "focus_x": 0.8,
                                     "focus_y": 0.5,
                                     "text_position": "bottom_right",
@@ -47,10 +48,10 @@ def vision_reply() -> bytes:
     ).encode()
 
 
-def test_live_uses_vision_instead_of_crop_loss_rule(
+def test_live_uses_vision_design_with_fixed_portrait_size(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    # Given: a wide photo that the old rule would keep at its original ratio.
+    # Given: a wide source photo and a confirmed hotel brief.
     given = request()
     given.direction = 3
     with provider(vision_reply()) as (url, received):
@@ -58,15 +59,17 @@ def test_live_uses_vision_instead_of_crop_loss_rule(
         monkeypatch.setenv("OPENAI_BASE_URL", url)
         # When: a live draft is requested.
         result = DraftEngine().generate(given)
-    # Then: the vision decision controls the third candidate and never edits pixels remotely.
+    # Then: Vision supplies structured design choices and output remains portrait.
     assert len(received) == 1
     payload = json.loads(received[0])
     assert payload["store"] is False
     assert payload["text"]["format"]["strict"] is True
     assert "tools" not in payload
     assert payload["input"][0]["content"][1]["type"] == "input_image"
+    context = json.loads(payload["input"][0]["content"][0]["text"])
+    assert context["selling_points"] == list(given.brief.selling_points)
     with Image.open(BytesIO(result.image_bytes)) as image:
-        assert image.size == (1024, 1024)
+        assert image.size == (1080, 1350)
 
 
 @pytest.mark.parametrize(
@@ -94,13 +97,33 @@ def test_provider_failure_is_explicit(
     assert "private" not in str(failure.value)
 
 
+@pytest.mark.parametrize("indices", [[1], [0, 0]])
+def test_unavailable_or_duplicate_facts_are_rejected(
+    indices: list[int], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Given: a brief with one fact and a provider selecting invalid facts.
+    reply = json.loads(vision_reply())
+    advice = json.loads(reply["output"][0]["content"][0]["text"])
+    advice["selling_point_indices"] = indices
+    reply["output"][0]["content"][0]["text"] = json.dumps(advice)
+    with provider(json.dumps(reply).encode()) as (url, received):
+        monkeypatch.setenv("OPENAI_API_KEY", "local-test-only")
+        monkeypatch.setenv("OPENAI_BASE_URL", url)
+        # When: the live pipeline consumes the advice.
+        with pytest.raises(ModelFailure) as failure:
+            DraftEngine().generate(request())
+    # Then: it fails explicitly without silently substituting or inventing facts.
+    assert failure.value.reason == "MODEL_OUTPUT_INVALID"
+    assert len(received) == 1
+
+
 @pytest.mark.parametrize(
     "text",
     [
         "not JSON",
         "{}",
-        '{"output_format":"square","focus_x":1.5,"focus_y":0.5,"text_position":"top_left","overlay_opacity":0.7}',
-        '{"output_format":"square","focus_x":0.5,"focus_y":0.5,"text_position":"center","overlay_opacity":0.7}',
+        '{"palette":"ocean","selling_point_indices":[0],"focus_x":1.5,"focus_y":0.5,"text_position":"top_left","overlay_opacity":0.7}',
+        '{"palette":"ocean","selling_point_indices":[0],"focus_x":0.5,"focus_y":0.5,"text_position":"center","overlay_opacity":0.7}',
     ],
 )
 def test_invalid_advice_is_rejected(text: str, monkeypatch: pytest.MonkeyPatch) -> None:

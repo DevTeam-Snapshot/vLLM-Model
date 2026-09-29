@@ -1,6 +1,6 @@
 from PIL import ImageFont
 
-from v2.composition import FONT_PATH, wrap_text
+from v2.ad_drawing import FONT_PATH, wrap_text
 
 
 def test_wrap_preserves_characters_when_korean_copy_is_long() -> None:

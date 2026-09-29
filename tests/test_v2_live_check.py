@@ -69,9 +69,7 @@ def test_live_cli_through_server_process(tmp_path: Path) -> None:
                 for index, path in enumerate(paths, start=1):
                     with Image.open(path) as image:
                         assert image.info["layout_provider"] == "openai"
-                        assert image.size == (
-                            (1024, 683) if index == 1 else (1024, 1024)
-                        )
+                        assert image.size == (1080, 1350)
                 print(result.stdout)
             finally:
                 server.terminate()

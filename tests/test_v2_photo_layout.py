@@ -13,9 +13,9 @@ from v2.errors import ModelFailure
 @pytest.mark.parametrize(
     "size,expected",
     [
-        ((1200, 800), [(1024, 683), (1024, 1024), (1024, 683)]),
-        ((800, 1200), [(683, 1024), (1024, 1024), (683, 1024)]),
-        ((1000, 900), [(1024, 922), (1024, 1024), (1024, 1024)]),
+        ((1200, 800), [(1080, 1350)] * 3),
+        ((800, 1200), [(1080, 1350)] * 3),
+        ((1000, 900), [(1080, 1350)] * 3),
     ],
 )
 def test_three_formats_when_source_ratio_changes(
@@ -33,13 +33,13 @@ def test_three_formats_when_source_ratio_changes(
         given.direction = direction
         with Image.open(BytesIO(engine.generate(given).image_bytes)) as result:
             dimensions.append(result.size)
-    # Then: the wide crop is avoided automatically, the near-square crop is used.
+    # Then: every source ratio produces the same Instagram portrait size.
     assert dimensions == expected
 
 
 def test_photo_reaches_edges_when_copy_is_overlaid() -> None:
     # Given: a photo with different landmarks at both edges.
-    source = Image.new("RGB", (1024, 768), "#91a8b7")
+    source = Image.new("RGB", (1080, 1350), "#91a8b7")
     draw = ImageDraw.Draw(source)
     draw.rectangle((0, 0, 100, 767), fill="#c3a15d")
     draw.rectangle((923, 0, 1023, 767), fill="#568aad")
@@ -47,7 +47,7 @@ def test_photo_reaches_edges_when_copy_is_overlaid() -> None:
     result = compose(source, Composition("바다 호텔", "편안한 하루", 1, 1))
     # Then: the middle strip retains both edges, without an external panel.
     with Image.open(BytesIO(result)) as rendered:
-        strip = (0, 350, 1024, 400)
+        strip = (0, 540, 1080, 780)
         assert rendered.size == source.size
         assert (
             ImageChops.difference(rendered.crop(strip), source.crop(strip)).getbbox()
@@ -69,19 +69,19 @@ def test_live_draft_requires_vision_configuration(
     assert failure.value.code == grpc.StatusCode.UNAVAILABLE
 
 
-def test_square_keeps_scale_when_cropping_a_wide_photo() -> None:
-    # Given: the central 1024 pixels fit a square without any resampling.
-    source = Image.new("RGB", (1536, 1024), "#39759a")
+def test_portrait_keeps_scale_when_cropping_a_wide_photo() -> None:
+    # Given: the central 1080 pixels fit 4:5 without resampling.
+    source = Image.new("RGB", (1600, 1350), "#39759a")
     draw = ImageDraw.Draw(source)
     draw.rectangle((0, 0, 255, 1023), fill="red")
     draw.rectangle((1280, 0, 1535, 1023), fill="blue")
     draw.ellipse((600, 440, 936, 580), fill="#c4a055")
-    # When: the square candidate is composed.
+    # When: a portrait candidate is composed.
     result = compose(source, Composition("호텔", "편안한 휴식", 2, 1))
     # Then: the clear middle strip is the central source crop, never stretched.
     with Image.open(BytesIO(result)) as rendered:
-        expected = source.crop((256, 470, 1280, 540))
-        actual = rendered.crop((0, 470, 1024, 540))
+        expected = source.crop((260, 540, 1340, 780))
+        actual = rendered.crop((0, 540, 1080, 780))
         assert ImageChops.difference(actual, expected).getbbox() is None
 
 

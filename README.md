@@ -61,4 +61,4 @@ Linux에서는 실행 파일 경로를 `.venv-v2/bin/python`으로 바꿉니다.
 - [GCP GPU 확인 자료](docs/v2-gpu-environment.md)
 - [라이선스를 포함한 한글 폰트](assets/fonts/README.md)
 
-출력은 사진 위에 숙소명·확정 문구가 합성된 PNG bytes입니다. 1번은 원본 비율(긴 변 1024), 2번은 1024×1024 자르기, 3번은 OpenAI가 원본 비율 또는 정사각형을 추천합니다. 저장 경로·URL·DB는 모델 서버가 관리하지 않습니다. V2 live는 OpenAI Vision 분석을 호출하며 사진을 다시 생성하지 않습니다. HealthCheck는 폰트·키 설정을 확인하며 실제 OpenAI 인증·호출 성공은 `v2.live_check`로 확인합니다. V1 이미지 생성 경로는 유지됩니다.
+출력은 사진 위에 숙소명·확정 문구가 합성된 PNG bytes입니다. 모두 1080×1350(4:5)이며, 1번 감성형·2번 장점 강조형·3번 편집형입니다. 기존 원본 비율·정사각형·자동 비율 정책은 폐기했습니다. 저장 경로·URL·DB는 모델 서버가 관리하지 않습니다. V2 live는 OpenAI Vision 분석을 호출하며 사진을 다시 생성하지 않습니다. HealthCheck는 폰트·키 설정을 확인하며 실제 OpenAI 인증·호출 성공은 `v2.live_check`로 확인합니다. V1 이미지 생성 경로는 유지됩니다.

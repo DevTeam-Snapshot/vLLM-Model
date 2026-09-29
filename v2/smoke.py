@@ -131,7 +131,7 @@ def main() -> None:
                 )
                 assert result.image_mime_type == "image/png"
                 with Image.open(BytesIO(result.image_bytes)) as decoded:
-                    expected_size = (1024, 1024) if direction == 2 else (1024, 683)
+                    expected_size = (1080, 1350)
                     assert decoded.size == expected_size and decoded.format == "PNG"
                     decoded.verify()
                 (output / f"{draft_id}.png").write_bytes(result.image_bytes)
@@ -179,7 +179,7 @@ def main() -> None:
         else:
             raise AssertionError("Server accepted a message over 32MiB")
     print(
-        "PASS: V1/V2 health, sequential planning turns, six full-photo PNG drafts (original/square/auto), "
+        "PASS: V1/V2 health, sequential planning turns, six 1080x1350 advertisement drafts, "
         "structured error. FAKE mode; no paid calls."
     )
     print(f"Images: {output.resolve()}")

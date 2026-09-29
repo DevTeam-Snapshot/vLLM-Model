@@ -1397,7 +1397,7 @@
         "draft_id": "draft-r1-a",
         "generation_round": 1,
         "direction": "room",
-        "image_bytes": "<PNG binary bytes; original ratio or square by direction; not literal wire data>",
+        "image_bytes": "<PNG binary bytes; 1080x1350 portrait 4:5 for every direction; not literal wire data>",
         "image_mime_type": "image/png"
       }
     },
@@ -1432,7 +1432,7 @@
         "draft_id": "draft-r1-b",
         "generation_round": 1,
         "direction": "emotion",
-        "image_bytes": "<PNG binary bytes; original ratio or square by direction; not literal wire data>",
+        "image_bytes": "<PNG binary bytes; 1080x1350 portrait 4:5 for every direction; not literal wire data>",
         "image_mime_type": "image/png"
       }
     },
@@ -1467,7 +1467,7 @@
         "draft_id": "draft-r1-c",
         "generation_round": 1,
         "direction": "benefit",
-        "image_bytes": "<PNG binary bytes; original ratio or square by direction; not literal wire data>",
+        "image_bytes": "<PNG binary bytes; 1080x1350 portrait 4:5 for every direction; not literal wire data>",
         "image_mime_type": "image/png"
       }
     },
@@ -1502,7 +1502,7 @@
         "draft_id": "draft-r2-a",
         "generation_round": 2,
         "direction": "room",
-        "image_bytes": "<PNG binary bytes; original ratio or square by direction; not literal wire data>",
+        "image_bytes": "<PNG binary bytes; 1080x1350 portrait 4:5 for every direction; not literal wire data>",
         "image_mime_type": "image/png"
       }
     },
@@ -1537,7 +1537,7 @@
         "draft_id": "draft-r2-b",
         "generation_round": 2,
         "direction": "emotion",
-        "image_bytes": "<PNG binary bytes; original ratio or square by direction; not literal wire data>",
+        "image_bytes": "<PNG binary bytes; 1080x1350 portrait 4:5 for every direction; not literal wire data>",
         "image_mime_type": "image/png"
       }
     },
@@ -1572,7 +1572,7 @@
         "draft_id": "draft-r2-c",
         "generation_round": 2,
         "direction": "benefit",
-        "image_bytes": "<PNG binary bytes; original ratio or square by direction; not literal wire data>",
+        "image_bytes": "<PNG binary bytes; 1080x1350 portrait 4:5 for every direction; not literal wire data>",
         "image_mime_type": "image/png"
       }
     }

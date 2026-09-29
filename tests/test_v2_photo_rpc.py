@@ -47,9 +47,7 @@ def test_live_photo_candidates_when_called_over_grpc(
                         assert result.generation_round == round_number
                         assert result.draft_id == given.draft_id
                         with Image.open(BytesIO(result.image_bytes)) as photo:
-                            assert photo.size == (
-                                (1024, 768) if direction == 1 else (1024, 1024)
-                            )
+                            assert photo.size == (1080, 1350)
                         outputs.append(result.image_bytes)
                 assert len(set(outputs)) == 3
                 assert len(received) == 6

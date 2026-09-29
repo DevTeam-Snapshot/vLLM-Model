@@ -29,8 +29,8 @@ FIXTURES = json.loads((Path(__file__).resolve().parents[1] / "docs/examples/v2-c
 def png_fixture():
     def chunk(kind, data):
         return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data) & 0xffffffff)
-    return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 1024, 1024, 8, 2, 0, 0, 0))
-            + chunk(b"IDAT", zlib.compress((b"\x00" + b"\xff\xff\xff" * 1024) * 1024)) + chunk(b"IEND", b""))
+    return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 1080, 1350, 8, 2, 0, 0, 0))
+            + chunk(b"IDAT", zlib.compress((b"\x00" + b"\xff\xff\xff" * 1080) * 1350)) + chunk(b"IEND", b""))
 
 
 PNG = png_fixture()

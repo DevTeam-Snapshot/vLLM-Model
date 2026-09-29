@@ -9,7 +9,7 @@
 | PlanningAgentService.ProcessTurn 및 HealthCheck | 구현. 무상태 처리, 코드 기반 필수값·단계·읽기 전용·정정·재확인 검증 |
 | DraftImageService.GenerateDraft 및 HealthCheck | 구현. 초안별 독립 호출, A/B/C 및 1·2회차 |
 | 동일한 hotel_ad_v2.proto | package/service/field 번호 변경 없음. 출력 크기와 direction별 형식 의미 변경 |
-| 후보별 비율의 PNG bytes | 입력 사진 검증 → 제한적 보정 → 원본 비율/정사각형/자동 선택 → 사진 위 한글 합성 |
+| 1080×1350 PNG bytes | 입력 사진 검증 → 제한적 보정 → 4:5 자르기 → 세 광고 템플릿 합성 |
 | 구조화 오류 | google.rpc.Status.details의 ModelErrorDetail, grpc-status-details-bin |
 | 0.0.0.0:50051 | V2 실행기 기본값. 호스트 테스트 포트는 Docker에서 15051 |
 | llm-service | 기본 및 백엔드 연결용 compose 서비스명 |
@@ -49,7 +49,7 @@
 | OPENAI_VISION_TIMEOUT_SECONDS | 60 | 분석 호출 제한 시간, 최대 120초, 자동 재시도 없음 |
 | BACKEND_DOCKER_NETWORK | fastapi-backend_default | 백엔드 연결용 compose에서만 사용 |
 
-V2 이미지는 live에서 OpenAI 분석 후 로컬 합성하며 원본 비율(긴 변 1024) 또는 1024×1024 PNG를 반환합니다. 서버는 요청·회차를 저장하지 않으므로 백엔드의 중복 방지와 결과 재사용이 필요합니다.
+V2 이미지는 live에서 OpenAI 분석 후 로컬 합성하며 1080×1350 PNG(4:5 고정)를 반환합니다. 서버는 요청·회차를 저장하지 않으므로 백엔드의 중복 방지와 결과 재사용이 필요합니다.
 
 채팅 문맥은 실제 vLLM 토크나이저로 측정합니다. 최근 대화 12개 상한과 8,000토큰 상한을 적용하고 전체 문맥에서 출력·템플릿 여유를 남겨 오래된 기록부터 줄입니다. 최대 출력은 1,536토큰, 예약 공간은 2,048토큰입니다. 실제 템플릿·GPU 설정은 GCP에서 검증해야 합니다.
 
