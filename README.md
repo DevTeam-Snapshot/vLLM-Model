@@ -1,5 +1,7 @@
 # Hotel Advertisement Model Server V2
 
+현재 Backend·React 연동 변경: [공간·분위기·혜택 계약](docs/v2-service-concepts-handoff.md). `lodging_service`와 별도 색상 단계가 추가됐으므로 양쪽 protobuf 및 기획서 매핑을 함께 갱신합니다.
+
 숙소 광고 기획용 채팅과 A/B/C 광고 이미지를 처리하는 무상태 gRPC 모델 서버입니다. 백엔드는 인증·기획서 저장·사진 정규화·작업 잠금·결과 저장·다시 생성 횟수를 관리합니다.
 
 ## 현재 상태
@@ -61,4 +63,4 @@ Linux에서는 실행 파일 경로를 `.venv-v2/bin/python`으로 바꿉니다.
 - [GCP GPU 확인 자료](docs/v2-gpu-environment.md)
 - [라이선스를 포함한 한글 폰트](assets/fonts/README.md)
 
-출력은 Image Gen이 원본 호텔 사진을 제한적으로 전체 편집하고 한글 문구·광고 디자인까지 생성한 PNG bytes입니다. 모두 1080×1350(4:5)이며 1번 객실 중심·2번 감성 중심·3번 장점 중심입니다. 서버는 결과를 비례 축소하며 live에서 고정 템플릿을 합성하지 않습니다. 사진·문구 보존은 프롬프트 지시이므로 실제 결과 검수가 필요합니다. HealthCheck는 키 설정만 확인하며 실제 API 호출은 `v2.live_check`로 확인합니다. 설정과 보존 범위는 [이미지 편집 계약](docs/v2-photo-rendering.md)을 참조하세요. V1 경로는 유지됩니다.
+출력은 Image Gen이 원본 호텔 사진을 제한적으로 전체 편집하고 한글 문구·광고 디자인까지 생성한 PNG bytes입니다. 모두 1080×1350(4:5)이며 1번 공간 내용 중심·2번 분위기 중심·3번 혜택 중심입니다. 서버는 결과를 비례 축소하며 live에서 고정 템플릿을 합성하지 않습니다. 사진·문구 보존은 프롬프트 지시이므로 실제 결과 검수가 필요합니다. HealthCheck는 키 설정만 확인하며 실제 API 호출은 `v2.live_check`로 확인합니다. 설정과 보존 범위는 [이미지 편집 계약](docs/v2-photo-rendering.md)을 참조하세요. V1 경로는 유지됩니다.

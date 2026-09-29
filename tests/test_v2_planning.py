@@ -28,6 +28,7 @@ def full_brief() -> pb.AdvertisementBrief:
         lodging_name="호텔",
         location="강릉",
         selling_points=["객실"],
+        lodging_service=["무료 주차"],
         target_audience="가족",
         mood="따뜻한",
         color_preference="auto",

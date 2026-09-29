@@ -1,5 +1,7 @@
 # V2 요청·응답 예시와 상태 전이 규칙
 
+최신 변경: [공간·분위기·혜택 연동 계약](v2-service-concepts-handoff.md)을 우선 적용합니다. 혜택 필드, 별도 색상 단계, 새 질문 순서와 후보 enum 이름을 함께 반영하세요.
+
 2026-09-29 변경: [Image Gen 사진 편집·4:5 광고 계약](v2-photo-rendering.md)을 우선 적용합니다. wire 필드는 유지하며 모든 후보의 출력은 1080×1350, 4:5 고정입니다.
 
 작성일: 2026-09-16. **백엔드 승인 완료된 의미 계약입니다. 최종 wire 규격과 호출 방법은 [proto 전달 안내](v2-proto-handoff.md)를 따릅니다. 서버 구현 완료를 뜻하지 않습니다.** 기존 [설계 회신](v2-model-design-reply.md)을 구체화합니다. 외부 AI 호출 없이 작성했으며 실제 모델의 정확도·응답 시간을 검증한 결과는 아닙니다.
@@ -22,9 +24,11 @@
 | --- | --- | --- |
 | lodging_type | lodging_type; other이면 lodging_type_detail | 5개 enum 중 하나, other 상세 필수 |
 | lodging_information | lodging_name, location | 명확하고 비어 있지 않음 |
-| selling_points | selling_points, original_image | 장점 최소 1개와 FastAPI가 확인한 사진 |
+| selling_points | selling_points, original_image | 공간 내용 최소 1개와 FastAPI가 확인한 사진 |
+| lodging_service | lodging_service | 실제 혜택 목록 또는 ["없음"] |
+| mood | mood | 지정 분위기 또는 명시적 디자인 위임 |
+| color_preference | color_preference | 원하는 색상 또는 무선호 auto |
 | target_audience | target_audience | 명확한 고객층 |
-| mood | mood, color_preference | 지정 값 또는 명시적 디자인 위임; 무선호 색은 auto |
 | ad_copy | ad_copy | 직접 입력 또는 후보 채택 |
 | complete | 위 조건 전부 | 재확인 없음, 문구 확정, 읽기 전용 |
 
@@ -34,7 +38,7 @@ lodging_type_detail은 other일 때만 필수 목록에 포함합니다. 다른 
 
 ## 3. ProcessTurn 요청·응답
 
-전체 JSON은 [연동 fixture](examples/v2-contract-cases.json)에 있습니다. JSON은 의미 검토용이며 실제 protobuf JSON 매핑은 최종 proto에서 정합니다.
+기존 [연동 fixture](examples/v2-contract-cases.json)는 이전 계약의 wire 변환 회귀 자료입니다. 새 질문 순서와 lodging_service 입력 예시는 [최신 연동 계약](v2-service-concepts-handoff.md)을 사용합니다.
 
 요청은 request_id, session_id, state_revision, event_type, user_message, current_step, brief, original_image_uploaded, fields_to_reconfirm, resume_step, ad_copy_candidates, conversation_history를 포함합니다. brief는 전체 값이며 누락 입력은 null, 장점 미입력은 빈 배열입니다. 이 필드들은 호출마다 전달하며 모델 서버가 이전 호출을 기억한다고 가정하지 않습니다.
 

@@ -41,10 +41,10 @@ def explain_error(error):
 def sample_chat_request(session_id):
     return turn_from_domain({
         "request_id": str(uuid4()), "session_id": session_id, "state_revision": 0,
-        "event_type": "user_message", "user_message": "강릉 바다호텔이고 호텔이에요.",
+        "event_type": "user_message", "user_message": "호텔이에요.",
         "current_step": "lodging_type", "brief": {
             "lodging_type": None, "lodging_type_detail": None, "lodging_name": None,
-            "location": None, "selling_points": [], "target_audience": None,
+            "location": None, "selling_points": [], "lodging_service": [], "target_audience": None,
             "mood": None, "color_preference": None, "ad_copy": None,
         }, "original_image_uploaded": False, "fields_to_reconfirm": [],
         "resume_step": None, "ad_copy_candidates": [], "conversation_history": [],
@@ -60,7 +60,7 @@ def sample_draft_request(session_id, draft_id, direction, generation_round, imag
         direction=pb.DraftDirection.Value("DRAFT_DIRECTION_" + direction.upper()),
         brief=pb.AdvertisementBrief(
             lodging_type=pb.LODGING_TYPE_HOTEL, lodging_name="바다호텔", location="강릉",
-            selling_points=["오션뷰 객실"], target_audience="커플 여행객", mood="따뜻한",
+            lodging_service=["없음"], selling_points=["오션뷰 객실"], target_audience="커플 여행객", mood="따뜻한",
             color_preference="베이지", ad_copy="바다와 함께하는 둘만의 하루",
         ), original_image_bytes=image, image_mime_type=mime,
     )
@@ -113,7 +113,7 @@ def main():
     parser.add_argument("--target", default="127.0.0.1:15051")
     parser.add_argument("--session-id", default="session-example")
     parser.add_argument("--draft-id")
-    parser.add_argument("--direction", choices=["room", "emotion", "benefit"], default="room")
+    parser.add_argument("--direction", choices=["room", "emotion", "benefit", "space", "mood", "service"], default="room")
     parser.add_argument("--generation-round", type=int, choices=[1, 2], default=1)
     parser.add_argument("--image", help="Already normalized model input image")
     parser.add_argument("--output")

@@ -68,6 +68,15 @@ def test_live_returns_edited_image_without_template_overlays(
     assert "input_fidelity" not in parts
     context = json.loads(parts["prompt"].decode().split("SOURCE DATA JSON:\n")[1])
     assert context["selling_points"] == list(request().brief.selling_points)
+    assert context["lodging_service"] == list(request().brief.lodging_service)
+    assert (
+        context["primary_focus"]
+        == {
+            1: "selling_points",
+            2: "mood",
+            3: "lodging_service",
+        }[direction]
+    )
     assert context["ad_copy"] == request().brief.ad_copy
     assert context["candidate"] == direction
     assert context["generation_round"] == round_number

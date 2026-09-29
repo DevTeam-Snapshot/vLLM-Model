@@ -11,6 +11,7 @@ FieldName = Literal[
     "lodging_name",
     "location",
     "selling_points",
+    "lodging_service",
     "target_audience",
     "mood",
     "color_preference",
@@ -25,6 +26,7 @@ class Updates(BaseModel):
     lodging_name: str | None = Field(default=None, min_length=1)
     location: str | None = Field(default=None, min_length=1)
     selling_points: list[str] = Field(default_factory=list)
+    lodging_service: list[str] = Field(default_factory=list)
     target_audience: str | None = Field(default=None, min_length=1)
     mood: str | None = Field(default=None, min_length=1)
     color_preference: str | None = Field(default=None, min_length=1)

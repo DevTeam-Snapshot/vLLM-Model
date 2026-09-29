@@ -37,10 +37,12 @@ def brief_from_domain(data):
     for key, value in data.items():
         if key not in result.DESCRIPTOR.fields_by_name:
             raise ValueError("Unknown brief field: " + key)
-        if key == "selling_points":
+        if key in ("selling_points", "lodging_service"):
+            if value is None:
+                continue
             if not isinstance(value, list):
-                raise ValueError("selling_points must be a list")
-            result.selling_points.extend(value)
+                raise ValueError(key + " must be a list")
+            getattr(result, key).extend(value)
         elif value is not None:
             setattr(result, key, enum_number(key, value) if key == "lodging_type" else value)
     return result
@@ -52,9 +54,9 @@ def patch_from_domain(data):
         if key not in result.DESCRIPTOR.fields_by_name:
             raise ValueError("Unknown patch field: " + key)
         change = getattr(result, key)
-        if key == "selling_points":
+        if key in ("selling_points", "lodging_service"):
             if not isinstance(value, list):
-                raise ValueError("selling_points patch must be a replacement list")
+                raise ValueError(key + " patch must be a replacement list")
             change.SetInParent()  # Preserve [] as an explicit replacement.
             change.values.extend(value)
         elif value is None:
@@ -68,7 +70,7 @@ def patch_to_domain(patch):
     result = {}
     for descriptor, change in patch.ListFields():
         key = descriptor.name
-        if key == "selling_points":
+        if key in ("selling_points", "lodging_service"):
             result[key] = list(change.values)
         elif change.WhichOneof("operation") == "clear":
             result[key] = None

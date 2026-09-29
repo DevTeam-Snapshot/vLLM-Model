@@ -67,6 +67,13 @@ class DraftEngine:
                 self.editor.settings.image_model,
             )
         else:
+            features = {
+                pb.DRAFT_DIRECTION_SPACE: tuple(request.brief.selling_points),
+                pb.DRAFT_DIRECTION_MOOD: (request.brief.mood,),
+                pb.DRAFT_DIRECTION_SERVICE: tuple(
+                    value for value in request.brief.lodging_service if value != "없음"
+                ),
+            }[request.direction]
             result = compose(
                 correct_photo(image),
                 Composition(
@@ -76,7 +83,7 @@ class DraftEngine:
                     request.generation_round,
                     True,
                     None,
-                    tuple(request.brief.selling_points),
+                    features,
                 ),
             )
         return pb.GenerateDraftResponse(

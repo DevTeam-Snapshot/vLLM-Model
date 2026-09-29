@@ -9,6 +9,7 @@ import hotel_ad_v2_pb2 as pb
 from v2.errors import ModelFailure
 from v2.planning_fields import (
     FIELD_IDS,
+    FIELD_ORDER,
     FIELDS,
     STEPS,
     expected_field_id,
@@ -23,12 +24,13 @@ QUESTIONS = (
     "기타 숙소 유형을 구체적으로 알려주세요.",
     "숙소 이름을 알려주세요.",
     "숙소가 있는 지역을 알려주세요.",
-    "숙소의 가장 큰 장점을 알려주세요.",
+    "객실, 전망, 시설 등 숙소 공간의 특징을 알려주세요.",
     "광고에 사용할 숙소 사진을 업로드해 주세요.",
     "어떤 고객에게 광고할까요?",
     "원하는 광고 분위기를 알려주세요.",
     "원하는 색상을 알려주세요. 선호가 없으면 위임할 수 있어요.",
     "광고 문구를 입력하거나 추천받으세요.",
+    "실제 제공하는 서비스나 혜택을 알려주세요. 유료·무료 및 이용 조건을 포함하고, 없다면 없음이라고 답해주세요.",
 )
 COMPLETE_MESSAGE = "기획서가 완성되었습니다. 이제 광고 이미지를 생성할 수 있습니다."
 
@@ -40,7 +42,7 @@ def validate_request(request: pb.ProcessTurnRequest) -> None:
         or not request.HasField("state_revision")
         or not request.HasField("original_image_uploaded")
         or not request.HasField("brief")
-        or request.current_step not in range(1, 8)
+        or request.current_step not in (*STEPS, pb.PLANNING_STEP_COMPLETE)
     )
     if invalid:
         raise ModelFailure("INVALID_ARGUMENT", grpc.StatusCode.INVALID_ARGUMENT)
@@ -62,7 +64,7 @@ def validate_request(request: pb.ProcessTurnRequest) -> None:
             for field in reconfirm
         )
         or bool(reconfirm) != request.HasField("resume_step")
-        or (request.HasField("resume_step") and request.resume_step not in range(1, 7))
+        or (request.HasField("resume_step") and request.resume_step not in STEPS)
         or len(request.ad_copy_candidates) > 3
         or any(not s.strip() or len(s) > 60 for s in request.ad_copy_candidates)
         or any(
@@ -133,11 +135,11 @@ class PlanningEngine:
             index = FIELD_IDS[FIELDS.index(name)]
             value = getattr(extraction.updates, name)
             previous = getattr(request.brief, name)
-            if name == "selling_points":
-                patch.selling_points.values.extend(value)
-                patch.selling_points.SetInParent()
-                del brief.selling_points[:]
-                brief.selling_points.extend(value)
+            if name in ("selling_points", "lodging_service"):
+                getattr(patch, name).values.extend(value)
+                getattr(patch, name).SetInParent()
+                del getattr(brief, name)[:]
+                getattr(brief, name).extend(value)
                 different = list(previous) != value
             else:
                 different = (brief.HasField(name) and previous != value) or (
@@ -173,7 +175,7 @@ class PlanningEngine:
                 "MODEL_OUTPUT_INVALID", grpc.StatusCode.INTERNAL
             ) from error
         candidates = list(request.ad_copy_candidates)
-        if changed.intersection({1, 2, 3, 4, 5, 7}):
+        if changed.intersection({1, 2, 3, 4, 5, 7, 11}):
             candidates = []
             if brief.HasField("ad_copy") and 10 not in changed:
                 reconfirm.add(pb.BRIEF_FIELD_AD_COPY)
@@ -195,10 +197,12 @@ class PlanningEngine:
             if natural_missing
             else pb.PLANNING_STEP_COMPLETE
         )
-        next_step = STEPS[min(reconfirm) - 1] if reconfirm else natural_step
-        next_field = min(reconfirm) if reconfirm else (
-            natural_missing[0] if natural_missing else None
+        next_field = (
+            min(reconfirm, key=FIELD_ORDER.index)
+            if reconfirm
+            else (natural_missing[0] if natural_missing else None)
         )
+        next_step = STEPS[next_field - 1] if next_field else pb.PLANNING_STEP_COMPLETE
         response = pb.ProcessTurnResponse(
             request_id=request.request_id,
             session_id=request.session_id,

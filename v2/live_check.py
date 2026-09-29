@@ -83,6 +83,7 @@ def check_live(photo_path: Path, output_root: Path) -> Path:
             lodging_name="호텔 광고 테스트",
             location="테스트 지역",
             selling_points=["제공된 숙소 사진"],
+            lodging_service=["없음"],
             target_audience="여행객",
             mood="차분한",
             color_preference="auto",
@@ -90,9 +91,9 @@ def check_live(photo_path: Path, output_root: Path) -> Path:
         )
         output.mkdir(parents=True, exist_ok=False)
         for direction in (
-            pb.DRAFT_DIRECTION_ROOM,
-            pb.DRAFT_DIRECTION_EMOTION,
-            pb.DRAFT_DIRECTION_BENEFIT,
+            pb.DRAFT_DIRECTION_SPACE,
+            pb.DRAFT_DIRECTION_MOOD,
+            pb.DRAFT_DIRECTION_SERVICE,
         ):
             request = pb.GenerateDraftRequest(
                 request_id=uuid4().hex,

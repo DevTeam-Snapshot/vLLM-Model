@@ -42,9 +42,10 @@ def main() -> None:
             ("lodging_name", "바다호텔", pb.PLANNING_STEP_LODGING_INFORMATION),
             ("location", "강릉", pb.PLANNING_STEP_LODGING_INFORMATION),
             ("selling_points", ["오션뷰 객실"], pb.PLANNING_STEP_SELLING_POINTS),
-            ("target_audience", "커플", pb.PLANNING_STEP_TARGET_AUDIENCE),
+            ("lodging_service", ["무료 주차"], pb.PLANNING_STEP_LODGING_SERVICE),
             ("mood", "차분함", pb.PLANNING_STEP_MOOD),
-            ("color_preference", "auto", pb.PLANNING_STEP_MOOD),
+            ("color_preference", "auto", pb.PLANNING_STEP_COLOR_PREFERENCE),
+            ("target_audience", "커플", pb.PLANNING_STEP_TARGET_AUDIENCE),
         )
         response = pb.ProcessTurnResponse()
         for revision, (field, value, step) in enumerate(turns):
@@ -62,17 +63,17 @@ def main() -> None:
                 timeout=30,
             )
             assert response.state_revision == revision and not response.is_complete
-            if field == "selling_points":
+            if field in ("selling_points", "lodging_service"):
                 assert isinstance(value, list)
-                brief.selling_points.extend(value)
+                getattr(brief, field).extend(value)
             else:
                 setattr(brief, field, value)
         assert response.next_step == pb.PLANNING_STEP_AD_COPY
         accepted = planning.ProcessTurn(
             pb.ProcessTurnRequest(
-                request_id="smoke-chat-8",
+                request_id="smoke-chat-final",
                 session_id="smoke",
-                state_revision=7,
+                state_revision=len(turns),
                 event_type=pb.TURN_EVENT_TYPE_USER_MESSAGE,
                 user_message="문구: 바다와 함께하는 둘만의 하루",
                 current_step=pb.PLANNING_STEP_AD_COPY,
@@ -107,9 +108,9 @@ def main() -> None:
         hashes: set[bytes] = set()
         for generation_round in (1, 2):
             for direction in (
-                pb.DRAFT_DIRECTION_ROOM,
-                pb.DRAFT_DIRECTION_EMOTION,
-                pb.DRAFT_DIRECTION_BENEFIT,
+                pb.DRAFT_DIRECTION_SPACE,
+                pb.DRAFT_DIRECTION_MOOD,
+                pb.DRAFT_DIRECTION_SERVICE,
             ):
                 draft_id = f"r{generation_round}-{direction}"
                 request = pb.GenerateDraftRequest(

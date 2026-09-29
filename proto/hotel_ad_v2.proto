@@ -38,6 +38,8 @@ enum PlanningStep {
   PLANNING_STEP_MOOD = 5;
   PLANNING_STEP_AD_COPY = 6;
   PLANNING_STEP_COMPLETE = 7;
+  PLANNING_STEP_LODGING_SERVICE = 8;
+  PLANNING_STEP_COLOR_PREFERENCE = 9;
 }
 
 enum BriefField {
@@ -53,6 +55,7 @@ enum BriefField {
   BRIEF_FIELD_MOOD = 8;
   BRIEF_FIELD_COLOR_PREFERENCE = 9;
   BRIEF_FIELD_AD_COPY = 10;
+  BRIEF_FIELD_LODGING_SERVICE = 11;
 }
 
 enum TurnEventType {
@@ -84,10 +87,14 @@ enum ConversationRole {
 }
 
 enum DraftDirection {
+  option allow_alias = true;
   DRAFT_DIRECTION_UNSPECIFIED = 0;
   DRAFT_DIRECTION_ROOM = 1;
   DRAFT_DIRECTION_EMOTION = 2;
   DRAFT_DIRECTION_BENEFIT = 3;
+  DRAFT_DIRECTION_SPACE = 1;
+  DRAFT_DIRECTION_MOOD = 2;
+  DRAFT_DIRECTION_SERVICE = 3;
 }
 
 message AdvertisementBrief {
@@ -104,6 +111,8 @@ message AdvertisementBrief {
   // "auto" = explicitly no preference; absent = not answered.
   optional string color_preference = 8;
   optional string ad_copy = 9;
+  // 1..5 supplied benefits, each <=100 characters; ["없음"] means none offered.
+  repeated string lodging_service = 10;
 }
 
 message StringChange {
@@ -137,6 +146,7 @@ message BriefPatch {
   StringChange mood = 7;
   StringChange color_preference = 8;
   StringChange ad_copy = 9;
+  StringListReplacement lodging_service = 10;
 }
 
 message ConversationMessage {
@@ -191,7 +201,7 @@ message GenerateDraftRequest {
   string draft_id = 3; // Stable for retries of the same draft/round/content.
   uint32 generation_round = 4; // 1 or 2 only.
   optional bool is_regeneration = 5; // Required; false iff round=1.
-  // Art direction: ROOM=architecture, EMOTION=atmosphere, BENEFIT=factual advantage.
+  // Art direction: SPACE=space details, SERVICE=provided benefits, MOOD=atmosphere.
   DraftDirection direction = 6;
   AdvertisementBrief brief = 7; // Frozen final snapshot from FastAPI.
   // One normalized JPEG/PNG/static WebP; <=25 MiB and <=20,000,000 pixels.

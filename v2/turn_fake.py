@@ -14,6 +14,13 @@ class FakeTurnExtractor:
 
     def extract(self, request: pb.ProcessTurnRequest) -> Extraction:
         message = request.user_message.strip()
+        if request.current_step == pb.PLANNING_STEP_LODGING_SERVICE and message in (
+            "없음",
+            "없어요",
+            "혜택 없음",
+            "서비스 없음",
+        ):
+            return Extraction(updates=Updates(lodging_service=["없음"]))
         if message.startswith("{"):
             try:
                 return Extraction(updates=Updates.model_validate_json(message))

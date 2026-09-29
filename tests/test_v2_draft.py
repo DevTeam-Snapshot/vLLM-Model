@@ -24,6 +24,7 @@ def request() -> pb.GenerateDraftRequest:
             lodging_name="바다 호텔",
             location="부산",
             selling_points=["바다 전망"],
+            lodging_service=["조식 제공 — 유료", "무료 주차"],
             target_audience="가족",
             mood="편안한",
             color_preference="auto",

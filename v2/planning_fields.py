@@ -18,6 +18,7 @@ FIELDS: Final = (
     "mood",
     "color_preference",
     "ad_copy",
+    "lodging_service",
 )
 STEPS: Final = (
     pb.PLANNING_STEP_LODGING_TYPE,
@@ -28,8 +29,9 @@ STEPS: Final = (
     pb.PLANNING_STEP_SELLING_POINTS,
     pb.PLANNING_STEP_TARGET_AUDIENCE,
     pb.PLANNING_STEP_MOOD,
-    pb.PLANNING_STEP_MOOD,
+    pb.PLANNING_STEP_COLOR_PREFERENCE,
     pb.PLANNING_STEP_AD_COPY,
+    pb.PLANNING_STEP_LODGING_SERVICE,
 )
 FIELD_IDS: Final = (
     pb.BRIEF_FIELD_LODGING_TYPE,
@@ -41,6 +43,20 @@ FIELD_IDS: Final = (
     pb.BRIEF_FIELD_TARGET_AUDIENCE,
     pb.BRIEF_FIELD_MOOD,
     pb.BRIEF_FIELD_COLOR_PREFERENCE,
+    pb.BRIEF_FIELD_AD_COPY,
+    pb.BRIEF_FIELD_LODGING_SERVICE,
+)
+FIELD_ORDER: Final = (
+    pb.BRIEF_FIELD_LODGING_TYPE,
+    pb.BRIEF_FIELD_LODGING_TYPE_DETAIL,
+    pb.BRIEF_FIELD_LODGING_NAME,
+    pb.BRIEF_FIELD_LOCATION,
+    pb.BRIEF_FIELD_SELLING_POINTS,
+    pb.BRIEF_FIELD_ORIGINAL_IMAGE,
+    pb.BRIEF_FIELD_LODGING_SERVICE,
+    pb.BRIEF_FIELD_MOOD,
+    pb.BRIEF_FIELD_COLOR_PREFERENCE,
+    pb.BRIEF_FIELD_TARGET_AUDIENCE,
     pb.BRIEF_FIELD_AD_COPY,
 )
 
@@ -59,15 +75,23 @@ def validate_brief(brief: pb.AdvertisementBrief) -> None:
     if brief.HasField("lodging_type") and brief.lodging_type not in range(1, 6):
         raise ModelFailure("INVALID_ARGUMENT", grpc.StatusCode.INVALID_ARGUMENT)
     for name in FIELDS:
-        if name in ("lodging_type", "selling_points", "original_image"):
+        if name in (
+            "lodging_type",
+            "selling_points",
+            "lodging_service",
+            "original_image",
+        ):
             continue
         if brief.HasField(name) and (
             not getattr(brief, name).strip() or len(getattr(brief, name)) > LIMITS[name]
         ):
             raise ModelFailure("INVALID_ARGUMENT", grpc.StatusCode.INVALID_ARGUMENT)
-    if len(brief.selling_points) > 5 or any(
-        not value.strip() or len(value) > 100 for value in brief.selling_points
-    ):
+    for values in (brief.selling_points, brief.lodging_service):
+        if len(values) > 5 or any(
+            not value.strip() or len(value) > 100 for value in values
+        ):
+            raise ModelFailure("INVALID_ARGUMENT", grpc.StatusCode.INVALID_ARGUMENT)
+    if "없음" in brief.lodging_service and len(brief.lodging_service) != 1:
         raise ModelFailure("INVALID_ARGUMENT", grpc.StatusCode.INVALID_ARGUMENT)
     if (
         brief.HasField("lodging_type_detail")
@@ -79,7 +103,7 @@ def validate_brief(brief: pb.AdvertisementBrief) -> None:
 def required_fields(brief: pb.AdvertisementBrief) -> list[pb.BriefField]:
     return [
         index
-        for index in FIELD_IDS
+        for index in FIELD_ORDER
         if index != 2 or brief.lodging_type == pb.LODGING_TYPE_OTHER
     ]
 
@@ -102,7 +126,7 @@ def expected_field_id(
     fields_to_reconfirm: list[pb.BriefField],
 ) -> pb.BriefField | None:
     if fields_to_reconfirm:
-        return min(fields_to_reconfirm)
+        return min(fields_to_reconfirm, key=FIELD_ORDER.index)
     missing = missing_fields(brief, image_uploaded)
     return missing[0] if missing else None
 
