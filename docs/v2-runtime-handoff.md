@@ -9,7 +9,7 @@
 | PlanningAgentService.ProcessTurn 및 HealthCheck | 구현. 무상태 처리, 코드 기반 필수값·단계·읽기 전용·정정·재확인 검증 |
 | DraftImageService.GenerateDraft 및 HealthCheck | 구현. 초안별 독립 호출, A/B/C 및 1·2회차 |
 | 동일한 hotel_ad_v2.proto | package/service/field 번호 변경 없음. 출력 크기와 direction별 형식 의미 변경 |
-| 1080×1350 PNG bytes | 입력 사진 검증 → 제한적 보정 → 4:5 자르기 → 세 광고 템플릿 합성 |
+| 1080×1350 PNG bytes | 입력 사진 검증 → Image Gen 전체 사진 편집·광고 디자인 → 1080×1350 비례 축소 |
 | 구조화 오류 | google.rpc.Status.details의 ModelErrorDetail, grpc-status-details-bin |
 | 0.0.0.0:50051 | V2 실행기 기본값. 호스트 테스트 포트는 Docker에서 15051 |
 | llm-service | 기본 및 백엔드 연결용 compose 서비스명 |
@@ -25,7 +25,7 @@
 
 `fake`는 정해진 JSON 필드 입력, 숙소 유형 단답, 문구 추천·번호 선택·`문구:` 입력만 지원합니다. 일반 한국어 입력은 추출된 것처럼 꾸미지 않고 모호 응답을 반환합니다. 생성 이미지는 원본 사진에 문구를 합성하며 FAKE 표시가 있습니다. API 키나 GPU가 필요하지 않습니다.
 
-`live`는 기획 서비스가 vLLM `/v1/models`, `/tokenize`, `/v1/chat/completions`를 호출합니다. V2 이미지는 OpenAI Vision으로 구도를 분석한 뒤 로컬에서 원본 사진을 보정·합성합니다. 실제 Qwen 모델이 요청 JSON Schema와 non-thinking 옵션을 지원해야 합니다. 통신 실패 시 fake로 대체하지 않습니다. [SSH 배포와 실제 API 테스트](v2-live-deployment.md)를 참조하세요.
+`live`는 기획 서비스가 vLLM `/v1/models`, `/tokenize`, `/v1/chat/completions`를 호출합니다. V2 이미지는 OpenAI Image Gen으로 원본 사진의 제한적인 전체 편집과 광고 디자인을 수행합니다. 사진·문구 보존은 프롬프트 지시이며 결과 검수가 필요합니다. 실제 Qwen 모델이 요청 JSON Schema와 non-thinking 옵션을 지원해야 합니다. 통신 실패 시 fake로 대체하지 않습니다. [SSH 배포와 실제 API 테스트](v2-live-deployment.md)를 참조하세요.
 
 두 모드 모두 gRPC 규격과 상태 처리 코드를 공유합니다. fake 테스트 성공은 한국어 모델 정확도나 사진 품질의 증거가 아닙니다. 로컬 HTTP 제공자를 사용하는 통합 테스트는 SDK와 실제 gRPC 서버 경로를 검증하며 외부 API의 실제 인증·품질 검증을 대신하지 않습니다.
 
@@ -43,13 +43,14 @@
 | VLLM_CONTEXT_TOKENS | 12288 | 실제 vLLM max-model-len과 일치시킬 전체 문맥 한도 |
 | VLLM_GPU_MEMORY_UTILIZATION | 0.80 | Qwen3-4B와 12,288토큰 문맥을 위한 L4 GPU 메모리 사용 한도 |
 | VLLM_TIMEOUT_SECONDS | 25 | 토큰 계산과 추론 요청에 사용되는 시간 예산, 최대 25 |
-| OPENAI_API_KEY | 빈 값 | V2 live 사진 분석 및 V1 이미지 API 인증 |
+| OPENAI_API_KEY | 빈 값 | V2 live 사진 편집 및 V1 이미지 API 인증 |
 | OPENAI_BASE_URL | https://api.openai.com/v1 | OpenAI API 주소 |
-| OPENAI_VISION_MODEL | gpt-4.1-mini | 이미지 입력과 구조화 출력을 지원하는 분석 모델 |
-| OPENAI_VISION_TIMEOUT_SECONDS | 60 | 분석 호출 제한 시간, 최대 120초, 자동 재시도 없음 |
+| IMAGE_MODEL | gpt-image-2 | 사진 편집과 완성 광고 생성 모델, 이 모델의 크기 계약 사용 |
+| IMAGE_QUALITY | high | low/medium/high/auto |
+| IMAGE_TIMEOUT_SECONDS | 150 | 이미지 호출 제한 시간, 최대 150초, 자동 재시도 없음 |
 | BACKEND_DOCKER_NETWORK | fastapi-backend_default | 백엔드 연결용 compose에서만 사용 |
 
-V2 이미지는 live에서 OpenAI 분석 후 로컬 합성하며 1080×1350 PNG(4:5 고정)를 반환합니다. 서버는 요청·회차를 저장하지 않으므로 백엔드의 중복 방지와 결과 재사용이 필요합니다.
+V2 이미지는 live에서 Image Gen이 사진 편집과 광고 디자인을 수행하고 서버가 1080×1350 PNG(4:5 고정)로 비례 축소합니다. 서버는 요청·회차를 저장하지 않으므로 백엔드의 중복 방지와 결과 재사용이 필요합니다.
 
 채팅 문맥은 실제 vLLM 토크나이저로 측정합니다. 최근 대화 12개 상한과 8,000토큰 상한을 적용하고 전체 문맥에서 출력·템플릿 여유를 남겨 오래된 기록부터 줄입니다. 최대 출력은 1,536토큰, 예약 공간은 2,048토큰입니다. 실제 템플릿·GPU 설정은 GCP에서 검증해야 합니다.
 
@@ -59,7 +60,7 @@ V2 이미지는 live에서 OpenAI 분석 후 로컬 합성하며 1080×1350 PNG(
 
 - fake 채팅: 로컬 엔진 준비 상태.
 - live 채팅: 유료 생성 없이 vLLM 모델 목록에서 설정한 모델 존재 확인.
-- V2 이미지: 한글 폰트 로딩, live에서는 OpenAI 키·모델 이름 설정 확인. 실제 인증과 모델 접근은 `python -m v2.live_check`로 확인합니다.
+- V2 이미지: fake는 한글 폰트 로딩, live는 OpenAI 키 설정 확인. 실제 인증과 모델 접근은 `python -m v2.live_check`로 확인합니다.
 - 이미지 장애가 채팅 상태를 바꾸지 않도록 서비스별 응답을 사용합니다. Docker healthcheck는 두 서비스가 모두 준비됐을 때 성공합니다.
 
 ## 검증 명령

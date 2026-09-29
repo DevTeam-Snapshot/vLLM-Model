@@ -8,7 +8,7 @@
 - `PlanningAgentService.ProcessTurn/HealthCheck`, `DraftImageService.GenerateDraft/HealthCheck`를 구현했습니다.
 - 기본 리스너 `0.0.0.0:50051`, Docker 서비스명 `llm-service`, gRPC 송수신 각각 32MiB입니다.
 - 기본 `MODEL_MODE=fake`는 유료 호출 없이 연동을 확인합니다. 생성물에 `FAKE / LOCAL TEST` 표시가 있습니다. 자연어 모델의 품질 검증을 대신하지 않습니다.
-- `MODEL_MODE=live`는 vLLM 채팅 추론을 사용하며 V2 이미지는 로컬 사진 보정·합성으로 처리합니다. **GCP에서 실제 모델 실행·품질·비용은 아직 검증 전입니다.**
+- `MODEL_MODE=live`는 vLLM 채팅 추론과 OpenAI Image Gen의 사진 편집·광고 디자인을 사용합니다. **GCP에서 실제 모델 실행·품질·비용은 아직 검증 전입니다.**
 - V2 실행기는 V1 서비스도 함께 등록합니다. 기존 `grpc_server.py`, `Dockerfile.grpc`는 V1 전용 진입점으로 보존했습니다.
 
 ## 단독 Docker 실행
@@ -61,4 +61,4 @@ Linux에서는 실행 파일 경로를 `.venv-v2/bin/python`으로 바꿉니다.
 - [GCP GPU 확인 자료](docs/v2-gpu-environment.md)
 - [라이선스를 포함한 한글 폰트](assets/fonts/README.md)
 
-출력은 사진 위에 숙소명·확정 문구가 합성된 PNG bytes입니다. 모두 1080×1350(4:5)이며, 1번 감성형·2번 장점 강조형·3번 편집형입니다. 기존 원본 비율·정사각형·자동 비율 정책은 폐기했습니다. 저장 경로·URL·DB는 모델 서버가 관리하지 않습니다. V2 live는 OpenAI Vision 분석을 호출하며 사진을 다시 생성하지 않습니다. HealthCheck는 폰트·키 설정을 확인하며 실제 OpenAI 인증·호출 성공은 `v2.live_check`로 확인합니다. V1 이미지 생성 경로는 유지됩니다.
+출력은 Image Gen이 원본 호텔 사진을 제한적으로 전체 편집하고 한글 문구·광고 디자인까지 생성한 PNG bytes입니다. 모두 1080×1350(4:5)이며 1번 객실 중심·2번 감성 중심·3번 장점 중심입니다. 서버는 결과를 비례 축소하며 live에서 고정 템플릿을 합성하지 않습니다. 사진·문구 보존은 프롬프트 지시이므로 실제 결과 검수가 필요합니다. HealthCheck는 키 설정만 확인하며 실제 API 호출은 `v2.live_check`로 확인합니다. 설정과 보존 범위는 [이미지 편집 계약](docs/v2-photo-rendering.md)을 참조하세요. V1 경로는 유지됩니다.

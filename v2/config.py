@@ -19,5 +19,6 @@ class Settings(BaseSettings):
     vllm_timeout_seconds: float = Field(default=25, gt=0, le=25)
     openai_api_key: SecretStr = SecretStr("")
     openai_base_url: str = "https://api.openai.com/v1"
-    openai_vision_model: str = "gpt-4.1-mini"
-    openai_vision_timeout_seconds: float = Field(default=60, gt=0, le=120)
+    image_model: Literal["gpt-image-2"] = "gpt-image-2"
+    image_quality: Literal["low", "medium", "high", "auto"] = "high"
+    image_timeout_seconds: float = Field(default=150, gt=0, le=150)

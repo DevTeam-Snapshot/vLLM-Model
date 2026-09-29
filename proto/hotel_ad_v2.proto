@@ -191,7 +191,7 @@ message GenerateDraftRequest {
   string draft_id = 3; // Stable for retries of the same draft/round/content.
   uint32 generation_round = 4; // 1 or 2 only.
   optional bool is_regeneration = 5; // Required; false iff round=1.
-  // Templates: ROOM=emotional, EMOTION=feature spotlight, BENEFIT=editorial.
+  // Art direction: ROOM=architecture, EMOTION=atmosphere, BENEFIT=factual advantage.
   DraftDirection direction = 6;
   AdvertisementBrief brief = 7; // Frozen final snapshot from FastAPI.
   // One normalized JPEG/PNG/static WebP; <=25 MiB and <=20,000,000 pixels.
@@ -208,8 +208,8 @@ message GenerateDraftResponse {
   uint32 generation_round = 4;
   DraftDirection direction = 5;
   bytes image_bytes = 6; // PNG with overlaid Korean copy, <=25 MiB.
-  // Every V2 candidate is 1080x1350 PNG (4:5), with aspect-preserving cover crop.
-  // Live: Vision selects crop focus, palette and source feature ordering.
+  // Every V2 candidate is 1080x1350 PNG (4:5).
+  // Live: Image Gen edits the source photo and renders the complete advertisement.
   string image_mime_type = 7; // Always image/png.
 }
 

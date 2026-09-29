@@ -1,7 +1,7 @@
 """Run live Qwen and OpenAI-backed gRPC checks with a supplied hotel photo.
 
 Usage: python -m v2.live_check PHOTO [OUTPUT_DIRECTORY]
-Requires MODEL_MODE=live; submits three OpenAI Vision requests via the server.
+Requires MODEL_MODE=live; submits three OpenAI image-edit requests via the server.
 """
 
 import os
@@ -56,7 +56,7 @@ def check_live(photo_path: Path, output_root: Path) -> Path:
             raise SystemExit("Qwen is not ready. Check the vllm container logs.")
         if not drafts.HealthCheck(empty_pb2.Empty(), timeout=10).healthy:
             raise SystemExit(
-                "Draft service is not ready. Check the key and Korean font."
+                "Draft service is not ready. Check the key and image model configuration."
             )
         turn = pb.ProcessTurnRequest(
             request_id=uuid4().hex,
@@ -119,7 +119,7 @@ def check_live(photo_path: Path, output_root: Path) -> Path:
             with Image.open(BytesIO(result.image_bytes)) as rendered:
                 if (
                     rendered.format != "PNG"
-                    or rendered.info.get("layout_provider") != "openai"
+                    or rendered.info.get("generation_provider") != "openai_image_edit"
                 ):
                     raise SystemExit(
                         "The server did not use OpenAI. Check its version and MODEL_MODE."
@@ -131,7 +131,7 @@ def check_live(photo_path: Path, output_root: Path) -> Path:
             with (output / f"candidate-{direction}.png").open("xb") as stream:
                 stream.write(result.image_bytes)
             print(
-                f"PASS: candidate={direction} size={size[0]}x{size[1]} layout_provider=openai"
+                f"PASS: candidate={direction} size={size[0]}x{size[1]} generation_provider=openai_image_edit"
             )
     print(f"Saved: {output.resolve()}")
     return output

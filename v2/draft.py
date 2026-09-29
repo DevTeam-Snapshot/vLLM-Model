@@ -1,4 +1,4 @@
-"""Validate V2 drafts and render corrected source photos locally."""
+"""Validate V2 drafts and generate complete advertisements."""
 
 from logging import getLogger
 
@@ -9,10 +9,10 @@ from PIL import ImageFont
 from v2.composition import FONT_PATH, Composition, compose
 from v2.config import Settings
 from v2.errors import ModelFailure
+from v2.image_editor import OpenAIAdvertisementEditor
 from v2.image_validation import decode_image
 from v2.photo_correction import correct_photo
 from v2.planning_fields import require_complete
-from v2.vision import OpenAILayoutPlanner
 
 logger = getLogger(__name__)
 
@@ -20,16 +20,18 @@ logger = getLogger(__name__)
 class DraftEngine:
     def __init__(self, *, fake: bool = False, settings: Settings | None = None) -> None:
         self.fake = fake
-        self.planner = OpenAILayoutPlanner(
+        self.editor = OpenAIAdvertisementEditor(
             settings if settings is not None else Settings()
         )
 
     def healthy(self) -> bool:
+        if not self.fake:
+            return self.editor.healthy()
         try:
             ImageFont.truetype(str(FONT_PATH), 24)
         except OSError:
             return False
-        return self.fake or self.planner.healthy()
+        return True
 
     def generate(self, request: pb.GenerateDraftRequest) -> pb.GenerateDraftResponse:
         if not all(
@@ -49,29 +51,27 @@ class DraftEngine:
             raise ModelFailure("INVALID_ARGUMENT", grpc.StatusCode.INVALID_ARGUMENT)
         require_complete(request.brief)
         image = decode_image(request.original_image_bytes, request.image_mime_type)
-        image = correct_photo(image)
-        layout = None if self.fake else self.planner.plan(image, request)
-        if layout is not None:
+        if not self.fake:
+            result = self.editor.generate(request)
             logger.info(
-                "openai_layout_applied candidate=%s round=%s model=%s palette=%s position=%s",
+                "openai_image_edit_completed candidate=%s round=%s model=%s",
                 request.direction,
                 request.generation_round,
-                self.planner.settings.openai_vision_model,
-                layout.palette,
-                layout.text_position,
+                self.editor.settings.image_model,
             )
-        result = compose(
-            image,
-            Composition(
-                request.brief.lodging_name,
-                request.brief.ad_copy,
-                request.direction,
-                request.generation_round,
-                self.fake,
-                layout,
-                tuple(request.brief.selling_points),
-            ),
-        )
+        else:
+            result = compose(
+                correct_photo(image),
+                Composition(
+                    request.brief.lodging_name,
+                    request.brief.ad_copy,
+                    request.direction,
+                    request.generation_round,
+                    True,
+                    None,
+                    tuple(request.brief.selling_points),
+                ),
+            )
         return pb.GenerateDraftResponse(
             request_id=request.request_id,
             session_id=request.session_id,

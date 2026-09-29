@@ -14,12 +14,14 @@ from v2.draft import DraftEngine
 
 
 @contextmanager
-def provider(reply: bytes, status: int = 200) -> Iterator[tuple[str, list[bytes]]]:
+def provider(
+    reply: bytes, status: int = 200, *, path: str = "/v1/images/edits"
+) -> Iterator[tuple[str, list[bytes]]]:
     received: list[bytes] = []
 
     class Handler(BaseHTTPRequestHandler):
         def do_POST(self) -> None:
-            if self.path != "/v1/responses":
+            if self.path != path:
                 self.send_error(404)
                 return
             received.append(self.rfile.read(int(self.headers["Content-Length"])))

@@ -8,7 +8,7 @@ from google.protobuf import empty_pb2
 from PIL import Image
 from test_v2_draft import request
 from test_v2_draft_provider import provider
-from test_v2_vision import vision_reply
+from test_v2_image_editor import image_reply
 
 from v2.draft import DraftEngine
 from v2.planning import PlanningEngine
@@ -18,9 +18,9 @@ from v2.services import register_services
 def test_live_photo_candidates_when_called_over_grpc(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    # Given: a real loopback gRPC listener with production local image processing.
+    # Given: a real loopback gRPC listener with the production image-edit SDK path.
     with (
-        provider(vision_reply()) as (url, received),
+        provider(image_reply()) as (url, received),
         ThreadPoolExecutor(max_workers=2) as pool,
     ):
         monkeypatch.setenv("OPENAI_API_KEY", "local-test-only")
@@ -49,7 +49,8 @@ def test_live_photo_candidates_when_called_over_grpc(
                         with Image.open(BytesIO(result.image_bytes)) as photo:
                             assert photo.size == (1080, 1350)
                         outputs.append(result.image_bytes)
-                assert len(set(outputs)) == 3
+                assert len(outputs) == 6
+                assert all(output == outputs[0] for output in outputs)
                 assert len(received) == 6
         finally:
             server.stop(0).wait()

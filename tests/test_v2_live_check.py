@@ -6,9 +6,9 @@ from pathlib import Path
 
 import grpc
 from PIL import Image, ImageDraw
-from test_v2_draft_provider import provider as vision_provider
+from test_v2_draft_provider import provider as image_provider
+from test_v2_image_editor import image_reply
 from test_v2_planning_vllm import provider as qwen_provider
-from test_v2_vision import vision_reply
 
 
 def test_live_cli_through_server_process(tmp_path: Path) -> None:
@@ -25,7 +25,7 @@ def test_live_cli_through_server_process(tmp_path: Path) -> None:
         port = reservation.getsockname()[1]
     with (
         qwen_provider('{"updates":{"lodging_type":1}}') as qwen,
-        vision_provider(vision_reply()) as (url, received),
+        image_provider(image_reply()) as (url, received),
     ):
         environment.update(
             MODEL_MODE="live",
@@ -60,7 +60,7 @@ def test_live_cli_through_server_process(tmp_path: Path) -> None:
                     timeout=45,
                     check=False,
                 )
-                # Then: Qwen is called and all three drafts use the Vision endpoint.
+                # Then: Qwen is called and all three drafts use the image-edit endpoint.
                 assert result.returncode == 0, result.stdout + result.stderr
                 assert len(received) == 3
                 assert any(path == "/v1/chat/completions" for path, _ in qwen.requests)
@@ -68,7 +68,7 @@ def test_live_cli_through_server_process(tmp_path: Path) -> None:
                 assert len(paths) == 3
                 for index, path in enumerate(paths, start=1):
                     with Image.open(path) as image:
-                        assert image.info["layout_provider"] == "openai"
+                        assert image.info["generation_provider"] == "openai_image_edit"
                         assert image.size == (1080, 1350)
                 print(result.stdout)
             finally:

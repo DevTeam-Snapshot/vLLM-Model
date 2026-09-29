@@ -55,7 +55,7 @@ def test_photo_reaches_edges_when_copy_is_overlaid() -> None:
         )
 
 
-def test_live_draft_requires_vision_configuration(
+def test_live_draft_requires_image_api_configuration(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     # Given: live mode with no API key.
