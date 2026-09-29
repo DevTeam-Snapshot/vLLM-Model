@@ -20,6 +20,7 @@ def image_reply(size: tuple[int, int] = (1152, 1440)) -> bytes:
         return json.dumps(
             {
                 "created": 1,
+                "size": f"{size[0]}x{size[1]}",
                 "data": [{"b64_json": base64.b64encode(stream.getvalue()).decode()}],
             }
         ).encode()

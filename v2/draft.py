@@ -52,9 +52,16 @@ class DraftEngine:
         require_complete(request.brief)
         image = decode_image(request.original_image_bytes, request.image_mime_type)
         if not self.fake:
+            logger.info(
+                "openai_image_edit_started request_id=%r candidate=%s round=%s",
+                request.request_id,
+                request.direction,
+                request.generation_round,
+            )
             result = self.editor.generate(request)
             logger.info(
-                "openai_image_edit_completed candidate=%s round=%s model=%s",
+                "openai_image_edit_completed request_id=%r candidate=%s round=%s model=%s",
+                request.request_id,
                 request.direction,
                 request.generation_round,
                 self.editor.settings.image_model,

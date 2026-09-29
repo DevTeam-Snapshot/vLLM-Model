@@ -12,11 +12,24 @@ from openai import (
     RateLimitError,
 )
 from PIL import Image, PngImagePlugin, UnidentifiedImageError
+from pydantic import BaseModel, ConfigDict, Field
 
 from v2.config import Settings
 from v2.errors import ModelFailure
 from v2.image_prompt import build_prompt
 from v2.image_validation import MAX_BYTES, MAX_PIXELS
+
+
+class EditedImage(BaseModel):
+    model_config = ConfigDict(frozen=True, strict=True)
+
+    b64_json: str = Field(min_length=1, max_length=((MAX_BYTES + 2) // 3) * 4)
+
+
+class EditResponse(BaseModel):
+    model_config = ConfigDict(frozen=True, strict=True)
+
+    data: list[EditedImage] = Field(min_length=1, max_length=1)
 
 
 def normalize_ad(encoded: str, model: str) -> bytes:
@@ -72,9 +85,8 @@ class OpenAIAdvertisementEditor:
                 base_url=self.settings.openai_base_url,
                 timeout=self.settings.image_timeout_seconds,
                 max_retries=0,
-                _strict_response_validation=True,
             ) as client:
-                response = client.images.edit(
+                response = client.images.with_raw_response.edit(
                     model=self.settings.image_model,
                     image=(
                         f"hotel-source.{extension}",
@@ -87,13 +99,8 @@ class OpenAIAdvertisementEditor:
                     quality=self.settings.image_quality,
                     output_format="png",
                 )
-            if (
-                not response.data
-                or len(response.data) != 1
-                or not response.data[0].b64_json
-            ):
-                raise ModelFailure("MODEL_OUTPUT_INVALID", grpc.StatusCode.INTERNAL)
-            return normalize_ad(response.data[0].b64_json, self.settings.image_model)
+            parsed = EditResponse.model_validate_json(response.text)
+            return normalize_ad(parsed.data[0].b64_json, self.settings.image_model)
         except RateLimitError as error:
             raise ModelFailure(
                 "UPSTREAM_RATE_LIMIT", grpc.StatusCode.RESOURCE_EXHAUSTED, True

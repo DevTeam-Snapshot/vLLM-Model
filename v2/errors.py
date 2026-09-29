@@ -1,6 +1,7 @@
 """Translate safe domain failures into the agreed gRPC status trailer."""
 
 from dataclasses import dataclass
+from logging import getLogger
 from typing import NoReturn
 
 import grpc
@@ -25,6 +26,13 @@ class ModelFailure(Exception):
 def abort(
     context: grpc.ServicerContext, request_id: str, failure: ModelFailure
 ) -> NoReturn:
+    getLogger(__name__).warning(
+        "grpc_request_failed request_id=%r reason=%s code=%s retryable=%s",
+        request_id,
+        failure.reason,
+        failure.code.name,
+        failure.retryable,
+    )
     detail = pb.ModelErrorDetail(
         request_id=request_id,
         reason=failure.reason,
