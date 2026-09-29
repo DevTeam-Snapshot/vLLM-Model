@@ -38,7 +38,7 @@ def test_fake_returns_png_when_complete() -> None:
     given = request()
     result = DraftEngine(fake=True).generate(given)
     with Image.open(BytesIO(result.image_bytes)) as image:
-        assert image.size == (1024, 1024)
+        assert image.size == (1024, 768)
         assert image.format == "PNG"
     assert result.draft_id == given.draft_id
 

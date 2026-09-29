@@ -1,20 +1,16 @@
-"""Exercise the real OpenAI SDK against a local HTTP server, never a paid API."""
+"""Guard the V2 local-render boundary against accidental image-provider calls."""
 
-import base64
-import json
 from collections.abc import Iterator
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from io import BytesIO
 from threading import Thread
 
-import grpc
 import pytest
 from PIL import Image
 from test_v2_draft import request
 
 from v2.draft import DraftEngine
-from v2.errors import ModelFailure
 
 
 @contextmanager
@@ -43,58 +39,18 @@ def provider(reply: bytes, status: int = 200) -> Iterator[tuple[str, list[bytes]
             thread.join(timeout=2)
 
 
-def test_sdk_edit_when_provider_returns_png() -> None:
-    buffer = BytesIO()
-    Image.new("RGB", (1024, 1024), "#557799").save(buffer, "PNG")
-    reply = json.dumps(
-        {
-            "created": 1,
-            "data": [{"b64_json": base64.b64encode(buffer.getvalue()).decode()}],
-        }
-    ).encode()
-    with provider(reply) as (url, received):
-        result = DraftEngine(api_key="local-test-only", base_url=url).generate(
-            request()
-        )
-    assert result.image_bytes.startswith(b"\x89PNG")
-    assert len(received) == 1
-    assert b'name="quality"\r\n\r\nmedium' in received[0]
-    assert b'name="size"\r\n\r\n1024x1024' in received[0]
-
-
-@pytest.mark.parametrize(
-    "reply",
-    [
-        b'{"created":1,"data":[{"b64_json":"!bad!"}]}',
-        b'{"created":1,"data":[{"b64_json":"YWJj"}]}',
-    ],
-)
-def test_invalid_output_when_provider_returns_corruption(reply: bytes) -> None:
-    with provider(reply) as (url, received), pytest.raises(ModelFailure) as failure:
-        DraftEngine(api_key="local-test-only", base_url=url).generate(request())
-    assert failure.value.reason == "MODEL_OUTPUT_INVALID"
-    assert failure.value.code == grpc.StatusCode.INTERNAL
-    assert len(received) == 1
-
-
-@pytest.mark.parametrize(
-    "status,reason,retryable",
-    [
-        (429, "UPSTREAM_RATE_LIMIT", True),
-        (500, "RESULT_UNKNOWN", False),
-        (400, "GENERATION_REJECTED", False),
-    ],
-)
-def test_provider_error_when_http_fails(
-    status: int, reason: str, retryable: bool
+@pytest.mark.parametrize("status", [200, 400, 429, 500])
+def test_local_render_ignores_provider_when_unavailable(
+    status: int, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    with (
-        provider(
-            b'{"error":{"message":"private diagnostic","type":"error"}}', status
-        ) as (url, received),
-        pytest.raises(ModelFailure) as failure,
-    ):
-        DraftEngine(api_key="local-test-only", base_url=url).generate(request())
-    assert failure.value.reason == reason
-    assert failure.value.retryable == retryable
-    assert len(received) == 1
+    # Given: an image API endpoint that would fail or return corrupt output.
+    with provider(b'{"data":[{"b64_json":"!bad!"}]}', status) as (url, received):
+        monkeypatch.setenv("OPENAI_API_KEY", "local-test-only")
+        monkeypatch.setenv("OPENAI_BASE_URL", url)
+        # When: a production draft is generated from its original photo.
+        result = DraftEngine().generate(request())
+    # Then: no photo is sent to the provider, regardless of provider status.
+    assert received == []
+    with Image.open(BytesIO(result.image_bytes)) as rendered:
+        assert rendered.size == (1024, 768)
+        assert rendered.format == "PNG"

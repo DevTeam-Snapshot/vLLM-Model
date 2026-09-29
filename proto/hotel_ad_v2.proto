@@ -191,6 +191,7 @@ message GenerateDraftRequest {
   string draft_id = 3; // Stable for retries of the same draft/round/content.
   uint32 generation_round = 4; // 1 or 2 only.
   optional bool is_regeneration = 5; // Required; false iff round=1.
+  // Candidate format: ROOM=original ratio, EMOTION=square crop, BENEFIT=auto.
   DraftDirection direction = 6;
   AdvertisementBrief brief = 7; // Frozen final snapshot from FastAPI.
   // One normalized JPEG/PNG/static WebP; <=25 MiB and <=20,000,000 pixels.
@@ -206,7 +207,9 @@ message GenerateDraftResponse {
   string draft_id = 3;
   uint32 generation_round = 4;
   DraftDirection direction = 5;
-  bytes image_bytes = 6; // 1024x1024 PNG with composed Korean copy, <=25 MiB.
+  bytes image_bytes = 6; // PNG with overlaid Korean copy, <=25 MiB.
+  // Original ratio: longest edge 1024, other edge rounded to nearest pixel.
+  // Square: 1024x1024 center crop. Auto: square only if retained area >=85%.
   string image_mime_type = 7; // Always image/png.
 }
 

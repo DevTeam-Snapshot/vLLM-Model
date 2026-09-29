@@ -4,11 +4,11 @@
 
 ## 현재 상태
 
-- 확정된 `proto/hotel_ad_v2.proto` 원본을 그대로 사용합니다.
+- `proto/hotel_ad_v2.proto`의 메시지·필드 번호를 유지합니다. 후보별 출력 비율은 아래 새 정책을 적용합니다.
 - `PlanningAgentService.ProcessTurn/HealthCheck`, `DraftImageService.GenerateDraft/HealthCheck`를 구현했습니다.
 - 기본 리스너 `0.0.0.0:50051`, Docker 서비스명 `llm-service`, gRPC 송수신 각각 32MiB입니다.
 - 기본 `MODEL_MODE=fake`는 유료 호출 없이 연동을 확인합니다. 생성물에 `FAKE / LOCAL TEST` 표시가 있습니다. 자연어 모델의 품질 검증을 대신하지 않습니다.
-- `MODEL_MODE=live`는 vLLM 채팅 추론과 OpenAI 이미지 API를 사용합니다. **GCP에서 실제 모델 실행·품질·비용은 아직 검증 전입니다.**
+- `MODEL_MODE=live`는 vLLM 채팅 추론을 사용하며 V2 이미지는 로컬 사진 보정·합성으로 처리합니다. **GCP에서 실제 모델 실행·품질·비용은 아직 검증 전입니다.**
 - V2 실행기는 V1 서비스도 함께 등록합니다. 기존 `grpc_server.py`, `Dockerfile.grpc`는 V1 전용 진입점으로 보존했습니다.
 
 ## 단독 Docker 실행
@@ -29,7 +29,7 @@ GCP의 live 구성은 같은 Docker 네트워크에 `vllm` 컨테이너를 함�
 MODEL_MODE=live docker compose -f docker-compose.grpc.yml up --build -d
 ```
 
-백엔드는 같은 네트워크에서 `llm-service:50051`을 호출합니다. 네트워크는 백엔드에서 먼저 생성되어 있어야 하며, 실제 이미지 생성에는 `.env`의 `OPENAI_API_KEY`가 필요합니다.
+백엔드는 같은 네트워크에서 `llm-service:50051`을 호출합니다. 네트워크는 백엔드에서 먼저 생성되어 있어야 하며, V2 이미지에는 API 키가 필요하지 않습니다. 기존 V1 이미지 API를 사용할 때만 `OPENAI_API_KEY`가 필요합니다.
 
 ## Docker 없는 로컬 검증
 
@@ -54,10 +54,11 @@ Linux에서는 실행 파일 경로를 `.venv-v2/bin/python`으로 바꿉니다.
 
 ## 문서
 
+- [사진 보정·후보별 비율·React/Backend 연동 변경](docs/v2-photo-rendering.md)
 - [이번 구현 상태·백엔드 10개 항목·사용자 다음 단계](docs/v2-runtime-handoff.md)
 - [원본 proto·Stub 생성·호출 안내](docs/v2-proto-handoff.md)
 - [승인된 의미 계약과 상태 전이](docs/v2-api-contract-examples.md)
 - [GCP GPU 확인 자료](docs/v2-gpu-environment.md)
 - [라이선스를 포함한 한글 폰트](assets/fonts/README.md)
 
-출력은 숙소명·확정 문구가 합성된 1024×1024 PNG bytes입니다. 저장 경로·URL·DB는 모델 서버가 관리하지 않습니다. 실제 이미지 생성은 비용이 발생하며, HealthCheck는 유료 생성을 호출하지 않습니다.
+출력은 사진 위에 숙소명·확정 문구가 합성된 PNG bytes입니다. 1번은 원본 비율(긴 변 1024), 2번은 1024×1024 중앙 자르기, 3번은 잘리는 면적이 15% 이하일 때 정사각형을 선택합니다. 저장 경로·URL·DB는 모델 서버가 관리하지 않습니다. V2는 외부 이미지 생성 API를 호출하지 않으며 HealthCheck는 로컬 폰트 준비 상태를 검사합니다. V1 유료 이미지 생성 경로는 유지됩니다.

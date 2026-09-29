@@ -46,6 +46,7 @@ def main() -> None:
             ("mood", "차분함", pb.PLANNING_STEP_MOOD),
             ("color_preference", "auto", pb.PLANNING_STEP_MOOD),
         )
+        response = pb.ProcessTurnResponse()
         for revision, (field, value, step) in enumerate(turns):
             response = planning.ProcessTurn(
                 pb.ProcessTurnRequest(
@@ -62,6 +63,7 @@ def main() -> None:
             )
             assert response.state_revision == revision and not response.is_complete
             if field == "selling_points":
+                assert isinstance(value, list)
                 brief.selling_points.extend(value)
             else:
                 setattr(brief, field, value)
@@ -129,7 +131,8 @@ def main() -> None:
                 )
                 assert result.image_mime_type == "image/png"
                 with Image.open(BytesIO(result.image_bytes)) as decoded:
-                    assert decoded.size == (1024, 1024) and decoded.format == "PNG"
+                    expected_size = (1024, 1024) if direction == 2 else (1024, 683)
+                    assert decoded.size == expected_size and decoded.format == "PNG"
                     decoded.verify()
                 (output / f"{draft_id}.png").write_bytes(result.image_bytes)
                 hashes.add(result.image_bytes)
@@ -176,7 +179,7 @@ def main() -> None:
         else:
             raise AssertionError("Server accepted a message over 32MiB")
     print(
-        "PASS: V1/V2 health, sequential planning turns, six 1024 PNG drafts, "
+        "PASS: V1/V2 health, sequential planning turns, six full-photo PNG drafts (original/square/auto), "
         "structured error. FAKE mode; no paid calls."
     )
     print(f"Images: {output.resolve()}")

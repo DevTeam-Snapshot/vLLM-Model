@@ -1,4 +1,4 @@
-"""Compose exact confirmed text in six deterministic square layouts."""
+"""Compose confirmed text over full-bleed photographs in three output formats."""
 
 from dataclasses import dataclass
 from io import BytesIO
@@ -41,7 +41,7 @@ def draw_fitted(
     draw: ImageDraw.ImageDraw, text: str, box: tuple[int, int, int, int]
 ) -> None:
     left, top, width, height = box
-    for size in range(58, 15, -2):
+    for size in range(58, 7, -2):
         font = ImageFont.truetype(str(FONT_PATH), size)
         lines = wrap_text(text, font, width)
         line_height = sum(font.getmetrics()) + 4
@@ -60,38 +60,62 @@ def draw_fitted(
     raise ModelFailure("COMPOSITION_FAILED", grpc.StatusCode.INTERNAL)
 
 
+def uses_square(image: Image.Image, direction: int) -> bool:
+    retained = min(image.size) / max(image.size)
+    return direction == 2 or (direction == 3 and retained >= 0.85)
+
+
 def compose(image: Image.Image, spec: Composition) -> bytes:
     try:
-        canvas = Image.new("RGB", (1024, 1024), "#142b35")
-        # The photo is contained, never cropped: the supplied room remains visible.
-        panel_top = (spec.direction + spec.generation_round) % 2 == 0
-        photo_height = 640 if spec.direction != 3 else 570
-        photo = ImageOps.contain(image, (1024, photo_height), Image.Resampling.LANCZOS)
-        photo_y = 1024 - photo_height if panel_top else 0
-        canvas.paste(
-            photo,
-            ((1024 - photo.width) // 2, photo_y + (photo_height - photo.height) // 2),
+        if uses_square(image, spec.direction):
+            canvas = ImageOps.fit(image, (1024, 1024), method=Image.Resampling.LANCZOS)
+        else:
+            scale = 1024 / max(image.size)
+            size = (
+                max(1, round(image.width * scale)),
+                max(1, round(image.height * scale)),
+            )
+            canvas = image.resize(size, Image.Resampling.LANCZOS)
+        width, height = canvas.size
+        inset = max(
+            8, round(min(width, height) * (0.06 + 0.015 * (spec.direction - 1)))
         )
+        top = (spec.direction + spec.generation_round) % 2 == 0
+        overlay_height = round(height * 0.44)
+        overlay = Image.new("RGBA", canvas.size)
+        shade = ImageDraw.Draw(overlay)
+        for offset in range(overlay_height):
+            alpha = round(190 * (1 - offset / overlay_height) ** 0.7)
+            y = offset if top else height - 1 - offset
+            shade.line((0, y, width, y), fill=(12, 20, 24, alpha))
+        canvas = Image.alpha_composite(canvas.convert("RGBA"), overlay).convert("RGB")
         draw = ImageDraw.Draw(canvas)
-        panel_y = 0 if panel_top else photo_height
-        panel_height = 1024 - photo_height
-        inset = 52 + (spec.direction - 1) * 12
-        draw.rectangle((inset, panel_y + 30, inset + 72, panel_y + 36), fill="#d5b783")
+        text_y = inset if top else height - overlay_height + inset // 2
+        content_height = overlay_height - inset * 2
+        text_width = width - 2 * inset
+        if spec.direction == 3:
+            text_width = round(text_width * 0.82)
+        draw.rectangle((inset, text_y, inset + 50, text_y + 3), fill="#e7ce96")
+        name_height = round(content_height * 0.48)
+        copy_y = text_y + 14 + name_height
         draw_fitted(
-            draw, spec.lodging_name, (inset, panel_y + 52, 1024 - 2 * inset, 142)
+            draw, spec.lodging_name, (inset, text_y + 12, text_width, name_height)
         )
         draw_fitted(
             draw,
             spec.ad_copy,
-            (inset, panel_y + 210, 1024 - 2 * inset, panel_height - 232),
+            (inset, copy_y, text_width, content_height - name_height),
         )
         if spec.fake:
-            draw.rectangle((0, photo_y, 224, photo_y + 35), fill="#142b35")
+            font = ImageFont.truetype(str(FONT_PATH), max(8, min(18, width // 30)))
             draw.text(
-                (12, photo_y + 7),
+                (width - 8, height // 2),
                 "FAKE / LOCAL TEST",
-                font=ImageFont.truetype(str(FONT_PATH), 18),
+                font=font,
                 fill="white",
+                stroke_width=1,
+                stroke_fill="#142b35",
+                anchor="rm",
             )
         output = BytesIO()
         canvas.save(output, format="PNG")

@@ -57,12 +57,7 @@ def run() -> None:
             )
         )
     )
-    draft = DraftEngine(
-        fake=fake,
-        api_key=settings.openai_api_key.get_secret_value(),
-        model=settings.image_model,
-        timeout=settings.image_timeout_seconds,
-    )
+    draft = DraftEngine(fake=fake)
     with ThreadPoolExecutor(max_workers=12) as pool:
         server = grpc.server(pool, options=CHANNEL_OPTIONS)
         register_services(server, planning, draft)

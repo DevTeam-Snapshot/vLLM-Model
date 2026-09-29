@@ -17,6 +17,3 @@ class Settings(BaseSettings):
     vllm_api_key: SecretStr = SecretStr("EMPTY")
     vllm_context_tokens: int = Field(default=12288, ge=2048, le=131072)
     vllm_timeout_seconds: float = Field(default=25, gt=0, le=25)
-    openai_api_key: SecretStr = SecretStr("")
-    image_model: str = "gpt-image-2"
-    image_timeout_seconds: float = Field(default=150, gt=0, le=150)

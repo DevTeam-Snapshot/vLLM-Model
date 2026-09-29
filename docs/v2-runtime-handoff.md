@@ -1,6 +1,6 @@
 # V2 모델 서버 구현 및 실행 인계
 
-작성일: 2026-09-21. 이 문서는 9월 16일의 계약 전달 문서 이후 구현 상태를 설명합니다. 계약 원본은 유지했으며 과거 문서의 “V2 서버 미구현”은 당시 상태입니다.
+갱신일: 2026-09-29. 사진 처리 변경은 [사진 보정·비율 계약](v2-photo-rendering.md)을 참조하세요. 이 문서는 9월 16일의 계약 전달 문서 이후 구현 상태를 설명합니다. wire 필드 번호는 유지했으며 과거 문서의 “V2 서버 미구현”은 당시 상태입니다.
 
 ## 백엔드 요청 10개 항목
 
@@ -8,8 +8,8 @@
 | --- | --- |
 | PlanningAgentService.ProcessTurn 및 HealthCheck | 구현. 무상태 처리, 코드 기반 필수값·단계·읽기 전용·정정·재확인 검증 |
 | DraftImageService.GenerateDraft 및 HealthCheck | 구현. 초안별 독립 호출, A/B/C 및 1·2회차 |
-| 동일한 hotel_ad_v2.proto | 전달 원본과 동일. package/service/field 번호 변경 없음 |
-| 1024×1024 PNG bytes | 입력 사진 검증 → 배경 → 서버 한글 합성 → PNG bytes |
+| 동일한 hotel_ad_v2.proto | package/service/field 번호 변경 없음. 출력 크기와 direction별 형식 의미 변경 |
+| 후보별 비율의 PNG bytes | 입력 사진 검증 → 제한적 보정 → 원본 비율/정사각형/자동 선택 → 사진 위 한글 합성 |
 | 구조화 오류 | google.rpc.Status.details의 ModelErrorDetail, grpc-status-details-bin |
 | 0.0.0.0:50051 | V2 실행기 기본값. 호스트 테스트 포트는 Docker에서 15051 |
 | llm-service | 기본 및 백엔드 연결용 compose 서비스명 |
@@ -25,9 +25,9 @@
 
 `fake`는 정해진 JSON 필드 입력, 숙소 유형 단답, 문구 추천·번호 선택·`문구:` 입력만 지원합니다. 일반 한국어 입력은 추출된 것처럼 꾸미지 않고 모호 응답을 반환합니다. 생성 이미지는 원본 사진에 문구를 합성하며 FAKE 표시가 있습니다. API 키나 GPU가 필요하지 않습니다.
 
-`live`는 모델 서비스가 vLLM `/v1/models`, `/tokenize`, `/v1/chat/completions`를 호출하고 이미지 서비스는 OpenAI 이미지 편집 API를 호출합니다. 실제 모델이 요청 JSON Schema와 Qwen non-thinking 옵션을 지원해야 합니다. 통신 실패 시 fake로 대체하지 않습니다.
+`live`는 모델 서비스가 vLLM `/v1/models`, `/tokenize`, `/v1/chat/completions`를 호출하고 V2 이미지 서비스는 외부 API 없이 원본 사진을 보정·합성합니다. V1만 기존 OpenAI 이미지 API를 사용합니다. 실제 모델이 요청 JSON Schema와 Qwen non-thinking 옵션을 지원해야 합니다. 통신 실패 시 fake로 대체하지 않습니다.
 
-두 모드 모두 gRPC 규격과 상태 처리 코드를 공유합니다. fake 테스트 성공은 한국어 모델 정확도나 이미지 생성 품질의 증거가 아닙니다. 실제 SDK의 HTTP 요청·응답 파싱·오류 매핑은 로컬 HTTP 테스트 서버로 검증했습니다.
+두 모드 모두 gRPC 규격과 상태 처리 코드를 공유합니다. fake 테스트 성공은 한국어 모델 정확도나 이미지 생성 품질의 증거가 아닙니다. V2 이미지가 외부 이미지 API를 호출하지 않는지는 로컬 HTTP 서버로 검증합니다.
 
 ## 환경변수
 
@@ -43,12 +43,10 @@
 | VLLM_CONTEXT_TOKENS | 12288 | 실제 vLLM max-model-len과 일치시킬 전체 문맥 한도 |
 | VLLM_GPU_MEMORY_UTILIZATION | 0.80 | Qwen3-4B와 12,288토큰 문맥을 위한 L4 GPU 메모리 사용 한도 |
 | VLLM_TIMEOUT_SECONDS | 25 | 토큰 계산과 추론 요청에 사용되는 시간 예산, 최대 25 |
-| OPENAI_API_KEY | 빈 값 | live 이미지 생성용, 사용자 환경에만 설정 |
-| IMAGE_MODEL | gpt-image-2 | 기존 프로젝트 이미지 모델 |
-| IMAGE_TIMEOUT_SECONDS | 150 | 이미지 API 요청 timeout, 최대 150 |
+| OPENAI_API_KEY | 빈 값 | 기존 V1 live 이미지 전용. V2에는 불필요 |
 | BACKEND_DOCKER_NETWORK | fastapi-backend_default | 백엔드 연결용 compose에서만 사용 |
 
-이미지 품질은 medium, 출력은 1024×1024 PNG로 명시했습니다. provider 자동 재시도는 0회입니다. 타임아웃 등 실행 여부가 불확실한 오류는 retryable=false로 처리합니다. 서버는 요청·회차를 저장하지 않으므로 백엔드의 중복 방지와 결과 재사용이 필요합니다.
+V2 이미지는 로컬 처리이며 원본 비율(긴 변 1024) 또는 1024×1024 PNG를 반환합니다. 서버는 요청·회차를 저장하지 않으므로 백엔드의 중복 방지와 결과 재사용이 필요합니다.
 
 채팅 문맥은 실제 vLLM 토크나이저로 측정합니다. 최근 대화 12개 상한과 8,000토큰 상한을 적용하고 전체 문맥에서 출력·템플릿 여유를 남겨 오래된 기록부터 줄입니다. 최대 출력은 1,536토큰, 예약 공간은 2,048토큰입니다. 실제 템플릿·GPU 설정은 GCP에서 검증해야 합니다.
 
@@ -58,7 +56,7 @@
 
 - fake 채팅: 로컬 엔진 준비 상태.
 - live 채팅: 유료 생성 없이 vLLM 모델 목록에서 설정한 모델 존재 확인.
-- 이미지: 한글 폰트 로딩 가능 여부, live에서는 API 키·모델 설정 존재 여부. **OpenAI 인증·잔액·모델 사용 권한·실제 생성 성공을 보장하지 않음.**
+- V2 이미지: 한글 폰트 로딩 가능 여부. 이미지 API 키·GPU 없이 로컬 보정·합성합니다.
 - 이미지 장애가 채팅 상태를 바꾸지 않도록 서비스별 응답을 사용합니다. Docker healthcheck는 두 서비스가 모두 준비됐을 때 성공합니다.
 
 ## 검증 명령
@@ -86,7 +84,7 @@ docker compose exec llm-service python -m v2.smoke
 
 1. 현재 Windows Docker Desktop의 Linux 엔진 파이프에 연결할 수 없어 컨테이너 build/up 검증을 하지 못했습니다. compose 두 구성의 문법 검증 및 Docker 없이 실제 Python gRPC 서버 검증은 수행했습니다.
 2. GCP 드라이버·가용 VRAM·RAM·모델 로딩·실제 vLLM 응답·처리량은 원격 실행 전입니다.
-3. 실제 OpenAI 생성과 비용, 실제 숙소 보존·이미지 품질은 미검증입니다. 이번 작업은 유료 호출을 하지 않았습니다.
+3. 실제 호텔 사진의 보정 품질은 별도 검수가 필요합니다. V2는 OpenAI 이미지 생성을 사용하지 않습니다.
 4. 백엔드/프런트 저장·다시 생성 차감·사용자 전체 흐름은 각 저장소와 함께 통합 테스트해야 합니다.
 
 ## 사용자가 직접 할 첫 단계
