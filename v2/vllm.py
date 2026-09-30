@@ -33,6 +33,11 @@ lodging_service describes actual services/benefits, retaining paid/free, eligibi
 availability and other conditions. Never turn a paid service into a free benefit.
 When the expected field is lodging_service and the user explicitly says no services
 or benefits, set lodging_service to ["없음"]. This must be its only item.
+Only accept lodging_service answers at PLANNING_STEP_LODGING_SERVICE.
+An image upload notification is not a service answer. Missing information, silence,
+uncertainty, delegation or a previous selling_points answer NEVER means no benefits.
+In these cases leave updates and confirmed empty and use status ambiguous.
+A negative about one benefit does not mean all benefits are absent.
 lodging_type: hotel=1,motel=2,resort=3,pension=4,other=5.
 other needs detail.
 Non-other clears detail.

@@ -18,6 +18,7 @@ from v2.planning_fields import (
     required_fields,
     validate_brief,
 )
+from v2.service_answer import ground_service_answer
 from v2.turn_types import Extraction, TurnExtractor, Updates
 
 QUESTIONS = (
@@ -99,6 +100,8 @@ class PlanningEngine:
         )
         if expected == pb.BRIEF_FIELD_TARGET_AUDIENCE:
             extraction = ground_audience_answer(request, extraction)
+        if expected == pb.BRIEF_FIELD_LODGING_SERVICE:
+            extraction = ground_service_answer(request, extraction)
         allowed = FIELDS[expected - 1] if expected and expected != 6 else None
         supplied = extraction.updates.model_dump(exclude_unset=True)
         selected = {allowed: supplied[allowed]} if allowed in supplied else {}
