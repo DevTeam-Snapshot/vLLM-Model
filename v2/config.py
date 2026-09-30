@@ -22,3 +22,5 @@ class Settings(BaseSettings):
     image_model: Literal["gpt-image-2"] = "gpt-image-2"
     image_quality: Literal["low", "medium", "high", "auto"] = "high"
     image_timeout_seconds: float = Field(default=150, gt=0, le=300)
+
+    image_max_concurrency: int = Field(default=3, ge=1, le=3)

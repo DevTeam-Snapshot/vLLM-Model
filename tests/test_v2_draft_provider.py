@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from io import BytesIO
 from itertools import repeat
-from threading import Lock, Thread
+from threading import Barrier, Lock, Thread
 from time import sleep
 
 import pytest
@@ -24,6 +24,7 @@ def provider(
     sequence: list[tuple[int, bytes, dict[str, str]]] | None = None,
     activity: list[int] | None = None,
     delay_seconds: float = 0,
+    barrier: Barrier | None = None,
 ) -> Iterator[tuple[str, list[bytes]]]:
     received: list[bytes] = []
     responses = iter(sequence) if sequence is not None else repeat((status, reply, {}))
@@ -40,6 +41,8 @@ def provider(
                     activity[1] = max(activity)
             try:
                 received.append(self.rfile.read(int(self.headers["Content-Length"])))
+                if barrier is not None:
+                    barrier.wait(timeout=5)
                 sleep(delay_seconds)
                 response_status, response_body, response_headers = next(responses)
                 self.send_response(response_status)

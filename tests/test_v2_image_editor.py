@@ -5,6 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 from email import policy
 from email.parser import BytesParser
 from io import BytesIO
+from threading import Barrier
 
 import grpc
 import pytest
@@ -109,25 +110,15 @@ def test_provider_failure_is_explicit(
     assert "private" not in str(failure.value)
 
 
-def test_transient_rate_limit_retries_once(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    # Given: the provider asks the client to retry a temporary image rate limit.
-    limited = b'{"error":{"type":"rate_limit_error","code":"rate_limit_exceeded","message":"slow down"}}'
-    with provider(
-        b"",
-        sequence=[
-            (429, limited, {"Retry-After": "0", "x-request-id": "req_limited"}),
-            (200, image_reply(), {}),
-        ],
-    ) as (url, received):
+def test_transient_rate_limit_is_not_retried(monkeypatch: pytest.MonkeyPatch) -> None:
+    limited = b'{"error":{"type":"requests","code":"rate_limit_exceeded"}}'
+    with provider(limited, 429) as (url, received):
         monkeypatch.setenv("OPENAI_API_KEY", "local-test-only")
         monkeypatch.setenv("OPENAI_BASE_URL", url)
-        # When: a live draft is requested.
-        result = DraftEngine().generate(request())
-    # Then: the temporary rejection is retried and returns the image.
-    assert result.image_mime_type == "image/png"
-    assert len(received) == 2
+        with pytest.raises(ModelFailure) as failure:
+            DraftEngine().generate(request())
+    assert failure.value.reason == "UPSTREAM_RATE_LIMIT"
+    assert len(received) == 1
 
 
 def test_permanent_rate_limit_logs_provider_code_without_retry(
@@ -148,28 +139,54 @@ def test_permanent_rate_limit_logs_provider_code_without_retry(
     assert "private billing detail" not in caplog.text
 
 
-def test_image_edit_requests_are_serialized(
+def test_three_image_requests_overlap_over_grpc(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    # Given: two image drafts reach one model-server editor concurrently.
+    import hotel_ad_v2_pb2_grpc as rpc
+
+    from v2.planning import PlanningEngine
+    from v2.services import register_services
+
     activity = [0, 0]
-    with provider(
-        image_reply(), activity=activity, delay_seconds=0.1
-    ) as (url, received):
+    with provider(image_reply(), activity=activity, barrier=Barrier(3)) as (
+        url,
+        received,
+    ):
         monkeypatch.setenv("OPENAI_API_KEY", "local-test-only")
         monkeypatch.setenv("OPENAI_BASE_URL", url)
-        engine = DraftEngine()
-        first = request()
-        first.request_id = "first"
-        second = request()
-        second.request_id = "second"
-        # When: both drafts are generated at the same time.
-        with ThreadPoolExecutor(max_workers=2) as pool:
-            results = list(pool.map(engine.generate, (first, second)))
-    # Then: the provider handles no more than one image edit at once.
-    assert len(results) == 2
-    assert len(received) == 2
-    assert activity[1] == 1
+        with (
+            ThreadPoolExecutor(max_workers=4) as server_pool,
+            ThreadPoolExecutor(max_workers=3) as callers,
+        ):
+            server = grpc.server(server_pool)
+            register_services(server, PlanningEngine(), DraftEngine())
+            port = server.add_insecure_port("127.0.0.1:0")
+            server.start()
+            try:
+                with grpc.insecure_channel(f"127.0.0.1:{port}") as channel:
+                    stub = rpc.DraftImageServiceStub(channel)
+                    requests = []
+                    for direction in (1, 2, 3):
+                        given = request()
+                        given.direction = direction
+                        given.request_id = f"request-{direction}"
+                        given.draft_id = f"draft-{direction}"
+                        requests.append(given)
+                    futures = [
+                        callers.submit(stub.GenerateDraft, given, timeout=15)
+                        for given in requests
+                    ]
+                    results = [future.result() for future in futures]
+                assert [(r.direction, r.request_id, r.draft_id) for r in results] == [
+                    (n, f"request-{n}", f"draft-{n}") for n in (1, 2, 3)
+                ]
+                assert all(
+                    r.image_mime_type == "image/png" and r.image_bytes for r in results
+                )
+            finally:
+                server.stop(0).wait()
+    assert len(received) == 3
+    assert activity[1] == 3
 
 
 @pytest.mark.parametrize(
@@ -196,3 +213,21 @@ def test_invalid_output_is_rejected(
     assert failure.value.reason == "MODEL_OUTPUT_INVALID"
     assert failure.value.code == grpc.StatusCode.INTERNAL
     assert len(received) == 1
+
+
+def test_concurrency_one_restores_sequential_processing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    activity = [0, 0]
+    with provider(image_reply(), activity=activity, delay_seconds=0.1) as (
+        url,
+        received,
+    ):
+        monkeypatch.setenv("OPENAI_API_KEY", "local-test-only")
+        monkeypatch.setenv("OPENAI_BASE_URL", url)
+        monkeypatch.setenv("IMAGE_MAX_CONCURRENCY", "1")
+        engine = DraftEngine()
+        with ThreadPoolExecutor(max_workers=3) as pool:
+            results = list(pool.map(engine.generate, (request(), request(), request())))
+    assert len(results) == len(received) == 3
+    assert activity[1] == 1

@@ -1,8 +1,7 @@
 import base64
 from io import BytesIO
 from logging import getLogger
-from threading import Lock
-from time import sleep
+from threading import BoundedSemaphore
 
 import grpc
 import hotel_ad_v2_pb2 as pb
@@ -74,7 +73,7 @@ def normalize_ad(encoded: str, model: str) -> bytes:
 class OpenAIAdvertisementEditor:
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
-        self._request_lock = Lock()
+        self._request_slots = BoundedSemaphore(settings.image_max_concurrency)
 
     def healthy(self) -> bool:
         return bool(self.settings.openai_api_key.get_secret_value().strip())
@@ -85,63 +84,45 @@ class OpenAIAdvertisementEditor:
         extension = {"image/png": "png", "image/jpeg": "jpg", "image/webp": "webp"}[
             request.image_mime_type
         ]
-        with self._request_lock:
-            return self._generate_serialized(request, extension)
+        with self._request_slots:
+            return self._generate_once(request, extension)
 
-    def _generate_serialized(
-        self, request: pb.GenerateDraftRequest, extension: str
-    ) -> bytes:
+    def _generate_once(self, request: pb.GenerateDraftRequest, extension: str) -> bytes:
         try:
-            for attempt in range(2):
-                try:
-                    with OpenAI(
-                        api_key=self.settings.openai_api_key.get_secret_value(),
-                        base_url=self.settings.openai_base_url,
-                        timeout=self.settings.image_timeout_seconds,
-                        max_retries=0,
-                    ) as client:
-                        response = client.images.with_raw_response.edit(
-                            model=self.settings.image_model,
-                            image=(
-                                f"hotel-source.{extension}",
-                                request.original_image_bytes,
-                                request.image_mime_type,
-                            ),
-                            prompt=build_prompt(request),
-                            n=1,
-                            size="1152x1440",
-                            quality=self.settings.image_quality,
-                            output_format="png",
-                        )
-                    parsed = EditResponse.model_validate_json(response.text)
-                    return normalize_ad(
-                        parsed.data[0].b64_json, self.settings.image_model
-                    )
-                except RateLimitError as error:
-                    retry_after = error.response.headers.get("retry-after")
-                    logger.warning(
-                        "openai_image_rate_limited request_id=%r status=%s error_type=%s error_code=%s retry_after=%s upstream_request_id=%r attempt=%s",
-                        request.request_id,
-                        error.status_code,
-                        error.type,
-                        error.code,
-                        retry_after,
-                        error.request_id,
-                        attempt + 1,
-                    )
-                    if attempt == 0 and error.code == "rate_limit_exceeded":
-                        try:
-                            delay = min(max(float(retry_after or "1"), 0), 60)
-                        except ValueError:
-                            delay = 1
-                        sleep(delay)
-                        continue
-                    raise ModelFailure(
-                        "UPSTREAM_RATE_LIMIT",
-                        grpc.StatusCode.RESOURCE_EXHAUSTED,
-                        True,
-                    ) from error
-            raise AssertionError("rate limit retry loop exhausted")
+            with OpenAI(
+                api_key=self.settings.openai_api_key.get_secret_value(),
+                base_url=self.settings.openai_base_url,
+                timeout=self.settings.image_timeout_seconds,
+                max_retries=0,
+            ) as client:
+                response = client.images.with_raw_response.edit(
+                    model=self.settings.image_model,
+                    image=(
+                        f"hotel-source.{extension}",
+                        request.original_image_bytes,
+                        request.image_mime_type,
+                    ),
+                    prompt=build_prompt(request),
+                    n=1,
+                    size="1152x1440",
+                    quality=self.settings.image_quality,
+                    output_format="png",
+                )
+            parsed = EditResponse.model_validate_json(response.text)
+            return normalize_ad(parsed.data[0].b64_json, self.settings.image_model)
+        except RateLimitError as error:
+            logger.warning(
+                "openai_image_rate_limited request_id=%r status=%s error_type=%s error_code=%s retry_after=%s upstream_request_id=%r attempt=1",
+                request.request_id,
+                error.status_code,
+                error.type,
+                error.code,
+                error.response.headers.get("retry-after"),
+                error.request_id,
+            )
+            raise ModelFailure(
+                "UPSTREAM_RATE_LIMIT", grpc.StatusCode.RESOURCE_EXHAUSTED, True
+            ) from error
         except (APITimeoutError, APIConnectionError) as error:
             raise ModelFailure(
                 "RESULT_UNKNOWN", grpc.StatusCode.DEADLINE_EXCEEDED
