@@ -14,6 +14,10 @@ Backend HTML 명세와의 대조 및 실제 proto 확인이 필요한 항목은 
 - mood와 color_preference는 별도 단계입니다.
 - Backend·React는 숫자 크기로 진행 순서를 판단하지 말고 응답 next_step을 따릅니다.
 
+광고 대상은 `current_step=target_audience`에서 사용자가 직접 답한 경우에만 저장합니다. 모델이 반환한 대상이 최신 사용자 답변에 없는 표현이거나 다른 언어로 번역된 값이면 Patch에 넣지 않고 같은 질문을 다시 합니다. 색상·분위기에서 타겟을 추론하거나 추천 요청을 확정 답변으로 처리하지 않습니다. 유효한 답변이 없으면 target_audience를 누락 상태로 유지하고 광고 문구 단계로 넘어가지 않습니다. 명시적인 JSON 답변도 같은 규칙을 적용합니다.
+
+이미 저장된 brief의 target_audience는 사용자 입력인지 과거 모델 추론인지 무상태 서버가 구분할 수 없습니다. 수정 후 테스트는 target_audience가 비어 있는 새 세션에서 진행하고, Backend는 모델의 brief_updates에 없는 타겟을 임의로 채우지 않아야 합니다. 기존 잘못된 타겟은 자동으로 삭제하지 않습니다.
+
 | 단계 | protobuf 값 |
 | --- | --- |
 | lodging_type | 1 |

@@ -52,6 +52,15 @@ Do not set original_image or decide steps/completion.
 For candidates use verified facts only.
 The input user_message is the latest utterance to extract. Extract only the
 single field named expected_field, even when the user supplies other facts.
+target_audience is NEVER inferred from hotel type, location, room, benefits, mood,
+colors, previous assistant suggestions or conversation history. Collect it only when
+expected_field is target_audience AND current_step is PLANNING_STEP_TARGET_AUDIENCE.
+Use an exact phrase from the latest user_message, preserving the user's language and
+spelling. Never translate Korean to Chinese characters or add demographics/categories.
+If the user asks you to choose, is unsure, or asks whether an audience is suitable,
+leave updates empty and status ambiguous; do not select an audience for them.
+An explicit JSON target_audience value is also a direct answer. Confirmation must
+explicitly name the audience; a generic yes is insufficient to infer a new value.
 Write that value inside updates, not only in explanation.
 candidates contains advertising slogans only, never field names, missing fields,
 or questions. Use [] unless the user asks for advertising copy suggestions.

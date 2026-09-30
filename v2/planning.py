@@ -6,6 +6,7 @@ import re
 import grpc
 import hotel_ad_v2_pb2 as pb
 
+from v2.audience_answer import ground_audience_answer
 from v2.errors import ModelFailure
 from v2.planning_fields import (
     FIELD_IDS,
@@ -26,7 +27,7 @@ QUESTIONS = (
     "숙소가 있는 지역을 알려주세요.",
     "객실, 전망, 시설 등 숙소 공간의 특징을 알려주세요.",
     "광고에 사용할 숙소 사진을 업로드해 주세요.",
-    "어떤 고객에게 광고할까요?",
+    "어떤 고객에게 광고할까요? 예: 커플 여행객, 아이 동반 가족, 출장객",
     "원하는 광고 분위기를 알려주세요.",
     "원하는 색상을 알려주세요. 선호가 없으면 위임할 수 있어요.",
     "광고 문구를 입력하거나 추천받으세요.",
@@ -96,6 +97,8 @@ class PlanningEngine:
             request.original_image_uploaded,
             list(request.fields_to_reconfirm),
         )
+        if expected == pb.BRIEF_FIELD_TARGET_AUDIENCE:
+            extraction = ground_audience_answer(request, extraction)
         allowed = FIELDS[expected - 1] if expected and expected != 6 else None
         supplied = extraction.updates.model_dump(exclude_unset=True)
         selected = {allowed: supplied[allowed]} if allowed in supplied else {}
