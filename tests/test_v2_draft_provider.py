@@ -2,9 +2,11 @@
 
 from collections.abc import Iterator
 from contextlib import contextmanager
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from io import BytesIO
-from threading import Thread
+from itertools import repeat
+from threading import Lock, Thread
+from time import sleep
 
 import pytest
 from PIL import Image
@@ -15,26 +17,47 @@ from v2.draft import DraftEngine
 
 @contextmanager
 def provider(
-    reply: bytes, status: int = 200, *, path: str = "/v1/images/edits"
+    reply: bytes,
+    status: int = 200,
+    *,
+    path: str = "/v1/images/edits",
+    sequence: list[tuple[int, bytes, dict[str, str]]] | None = None,
+    activity: list[int] | None = None,
+    delay_seconds: float = 0,
 ) -> Iterator[tuple[str, list[bytes]]]:
     received: list[bytes] = []
+    responses = iter(sequence) if sequence is not None else repeat((status, reply, {}))
+    activity_lock = Lock()
 
     class Handler(BaseHTTPRequestHandler):
         def do_POST(self) -> None:
             if self.path != path:
                 self.send_error(404)
                 return
-            received.append(self.rfile.read(int(self.headers["Content-Length"])))
-            self.send_response(status)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Content-Length", str(len(reply)))
-            self.end_headers()
-            self.wfile.write(reply)
+            if activity is not None:
+                with activity_lock:
+                    activity[0] += 1
+                    activity[1] = max(activity)
+            try:
+                received.append(self.rfile.read(int(self.headers["Content-Length"])))
+                sleep(delay_seconds)
+                response_status, response_body, response_headers = next(responses)
+                self.send_response(response_status)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(response_body)))
+                for name, value in response_headers.items():
+                    self.send_header(name, value)
+                self.end_headers()
+                self.wfile.write(response_body)
+            finally:
+                if activity is not None:
+                    with activity_lock:
+                        activity[0] -= 1
 
         def log_message(self, format: str, *args: str) -> None:
             return
 
-    with HTTPServer(("127.0.0.1", 0), Handler) as server:
+    with ThreadingHTTPServer(("127.0.0.1", 0), Handler) as server:
         thread = Thread(target=server.serve_forever, daemon=True)
         thread.start()
         try:

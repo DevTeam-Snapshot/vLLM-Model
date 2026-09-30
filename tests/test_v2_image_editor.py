@@ -1,5 +1,7 @@
 import base64
 import json
+import logging
+from concurrent.futures import ThreadPoolExecutor
 from email import policy
 from email.parser import BytesParser
 from io import BytesIO
@@ -105,6 +107,69 @@ def test_provider_failure_is_explicit(
     assert failure.value.reason == reason
     assert len(received) == 1
     assert "private" not in str(failure.value)
+
+
+def test_transient_rate_limit_retries_once(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Given: the provider asks the client to retry a temporary image rate limit.
+    limited = b'{"error":{"type":"rate_limit_error","code":"rate_limit_exceeded","message":"slow down"}}'
+    with provider(
+        b"",
+        sequence=[
+            (429, limited, {"Retry-After": "0", "x-request-id": "req_limited"}),
+            (200, image_reply(), {}),
+        ],
+    ) as (url, received):
+        monkeypatch.setenv("OPENAI_API_KEY", "local-test-only")
+        monkeypatch.setenv("OPENAI_BASE_URL", url)
+        # When: a live draft is requested.
+        result = DraftEngine().generate(request())
+    # Then: the temporary rejection is retried and returns the image.
+    assert result.image_mime_type == "image/png"
+    assert len(received) == 2
+
+
+def test_permanent_rate_limit_logs_provider_code_without_retry(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    # Given: the provider reports exhausted project credit.
+    exhausted = b'{"error":{"type":"insufficient_quota","code":"credit_balance_exhausted","message":"private billing detail"}}'
+    with provider(exhausted, 429) as (url, received):
+        monkeypatch.setenv("OPENAI_API_KEY", "local-test-only")
+        monkeypatch.setenv("OPENAI_BASE_URL", url)
+        # When: a live draft is requested.
+        with caplog.at_level(logging.WARNING), pytest.raises(ModelFailure):
+            DraftEngine().generate(request())
+    # Then: operators see the safe provider code and no futile retry occurs.
+    assert len(received) == 1
+    assert "error_code=credit_balance_exhausted" in caplog.text
+    assert "private billing detail" not in caplog.text
+
+
+def test_image_edit_requests_are_serialized(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Given: two image drafts reach one model-server editor concurrently.
+    activity = [0, 0]
+    with provider(
+        image_reply(), activity=activity, delay_seconds=0.1
+    ) as (url, received):
+        monkeypatch.setenv("OPENAI_API_KEY", "local-test-only")
+        monkeypatch.setenv("OPENAI_BASE_URL", url)
+        engine = DraftEngine()
+        first = request()
+        first.request_id = "first"
+        second = request()
+        second.request_id = "second"
+        # When: both drafts are generated at the same time.
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            results = list(pool.map(engine.generate, (first, second)))
+    # Then: the provider handles no more than one image edit at once.
+    assert len(results) == 2
+    assert len(received) == 2
+    assert activity[1] == 1
 
 
 @pytest.mark.parametrize(
