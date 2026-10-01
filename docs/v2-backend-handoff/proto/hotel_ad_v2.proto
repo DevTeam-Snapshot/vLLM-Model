@@ -1,0 +1,237 @@
+syntax = "proto3";
+
+package hotel.adimage.v2;
+
+import "google/protobuf/empty.proto";
+
+// V2 business contract. Independent of the vLLM engine protocol and V1.
+// Both peers: max send/receive message size = 33,554,432 bytes (32 MiB).
+// Application validation is required: proto3 itself does not enforce required
+// fields, enum membership, bounds, state transitions, or image decoding rules.
+service PlanningAgentService {
+  // Unary. Initial deadline: 30 seconds. No server-side conversation state.
+  rpc ProcessTurn(ProcessTurnRequest) returns (ProcessTurnResponse);
+  rpc HealthCheck(google.protobuf.Empty) returns (HealthCheckResponse);
+}
+
+service DraftImageService {
+  // Unary, one draft per call. Initial deadline: 180 seconds.
+  rpc GenerateDraft(GenerateDraftRequest) returns (GenerateDraftResponse);
+  rpc HealthCheck(google.protobuf.Empty) returns (HealthCheckResponse);
+}
+
+enum LodgingType {
+  LODGING_TYPE_UNSPECIFIED = 0;
+  LODGING_TYPE_HOTEL = 1;
+  LODGING_TYPE_MOTEL = 2;
+  LODGING_TYPE_RESORT = 3;
+  LODGING_TYPE_PENSION = 4;
+  LODGING_TYPE_OTHER = 5;
+}
+
+enum PlanningStep {
+  PLANNING_STEP_UNSPECIFIED = 0;
+  PLANNING_STEP_LODGING_TYPE = 1;
+  PLANNING_STEP_LODGING_INFORMATION = 2;
+  PLANNING_STEP_SELLING_POINTS = 3;
+  PLANNING_STEP_TARGET_AUDIENCE = 4;
+  PLANNING_STEP_MOOD = 5;
+  PLANNING_STEP_AD_COPY = 6;
+  PLANNING_STEP_COMPLETE = 7;
+  PLANNING_STEP_LODGING_SERVICE = 8;
+  PLANNING_STEP_COLOR_PREFERENCE = 9;
+}
+
+enum BriefField {
+  BRIEF_FIELD_UNSPECIFIED = 0;
+  BRIEF_FIELD_LODGING_TYPE = 1;
+  BRIEF_FIELD_LODGING_TYPE_DETAIL = 2;
+  BRIEF_FIELD_LODGING_NAME = 3;
+  BRIEF_FIELD_LOCATION = 4;
+  BRIEF_FIELD_SELLING_POINTS = 5;
+  // Virtual field verified by FastAPI, never a BriefPatch field.
+  BRIEF_FIELD_ORIGINAL_IMAGE = 6;
+  BRIEF_FIELD_TARGET_AUDIENCE = 7;
+  BRIEF_FIELD_MOOD = 8;
+  BRIEF_FIELD_COLOR_PREFERENCE = 9;
+  BRIEF_FIELD_AD_COPY = 10;
+  BRIEF_FIELD_LODGING_SERVICE = 11;
+}
+
+enum TurnEventType {
+  TURN_EVENT_TYPE_UNSPECIFIED = 0;
+  TURN_EVENT_TYPE_USER_MESSAGE = 1;
+  TURN_EVENT_TYPE_IMAGE_UPLOADED = 2;
+}
+
+enum MessageIntent {
+  MESSAGE_INTENT_UNSPECIFIED = 0;
+  MESSAGE_INTENT_ANSWER = 1;
+  MESSAGE_INTENT_CORRECTION = 2;
+  MESSAGE_INTENT_QUESTION = 3;
+  MESSAGE_INTENT_SYSTEM_EVENT = 4;
+}
+
+enum AnswerStatus {
+  ANSWER_STATUS_UNSPECIFIED = 0;
+  ANSWER_STATUS_VALID = 1;
+  ANSWER_STATUS_AMBIGUOUS = 2;
+  ANSWER_STATUS_OFF_TOPIC = 3;
+  ANSWER_STATUS_NOT_APPLICABLE = 4;
+}
+
+enum ConversationRole {
+  CONVERSATION_ROLE_UNSPECIFIED = 0;
+  CONVERSATION_ROLE_USER = 1;
+  CONVERSATION_ROLE_ASSISTANT = 2;
+}
+
+enum DraftDirection {
+  option allow_alias = true;
+  DRAFT_DIRECTION_UNSPECIFIED = 0;
+  DRAFT_DIRECTION_ROOM = 1;
+  DRAFT_DIRECTION_EMOTION = 2;
+  DRAFT_DIRECTION_BENEFIT = 3;
+  DRAFT_DIRECTION_SPACE = 1;
+  DRAFT_DIRECTION_MOOD = 2;
+  DRAFT_DIRECTION_SERVICE = 3;
+}
+
+message AdvertisementBrief {
+  // Absent optional field = unset/null. Explicit UNSPECIFIED and empty strings
+  // are invalid values. GenerateDraft requires a complete, validated brief.
+  optional LodgingType lodging_type = 1;
+  // Required only for OTHER. Clear when changing to another lodging type.
+  optional string lodging_type_detail = 2;
+  optional string lodging_name = 3;
+  optional string location = 4;
+  repeated string selling_points = 5;
+  optional string target_audience = 6;
+  optional string mood = 7;
+  // "auto" = explicitly no preference; absent = not answered.
+  optional string color_preference = 8;
+  optional string ad_copy = 9;
+  // 1..5 supplied benefits, each <=100 characters; ["없음"] means none offered.
+  repeated string lodging_service = 10;
+}
+
+message StringChange {
+  // Present change MUST select exactly one operation; set_value must be nonempty.
+  oneof operation {
+    string set_value = 1;
+    google.protobuf.Empty clear = 2;
+  }
+}
+
+message LodgingTypeChange {
+  oneof operation {
+    LodgingType set_value = 1;
+    google.protobuf.Empty clear = 2;
+  }
+}
+
+message StringListReplacement {
+  // Present with an empty list = replace with []; never append implicitly.
+  repeated string values = 1;
+}
+
+message BriefPatch {
+  // Absent message = leave unchanged. String/enum clear = set to unset/null.
+  LodgingTypeChange lodging_type = 1;
+  StringChange lodging_type_detail = 2;
+  StringChange lodging_name = 3;
+  StringChange location = 4;
+  StringListReplacement selling_points = 5;
+  StringChange target_audience = 6;
+  StringChange mood = 7;
+  StringChange color_preference = 8;
+  StringChange ad_copy = 9;
+  StringListReplacement lodging_service = 10;
+}
+
+message ConversationMessage {
+  ConversationRole role = 1;
+  string content = 2;
+}
+
+message ProcessTurnRequest {
+  string request_id = 1;
+  string session_id = 2;
+  // Required presence; 0 is valid. Response echoes this value, not +1.
+  optional uint64 state_revision = 3;
+  TurnEventType event_type = 4;
+  // USER_MESSAGE: nonempty. IMAGE_UPLOADED: empty, verified upload=true.
+  string user_message = 5;
+  PlanningStep current_step = 6;
+  AdvertisementBrief brief = 7;
+  // Required presence, set by FastAPI after asset/session ownership verification.
+  optional bool original_image_uploaded = 8;
+  repeated BriefField fields_to_reconfirm = 9;
+  // Absent = null. Present only while reconfirming; never COMPLETE/UNSPECIFIED.
+  optional PlanningStep resume_step = 10;
+  repeated string ad_copy_candidates = 11; // 0..3, ordered for number selection.
+  // At most 12 recent messages and 8,000 tokens; excludes user_message above.
+  // Model service further trims to its total context budget using its tokenizer.
+  repeated ConversationMessage conversation_history = 12;
+}
+
+message ProcessTurnResponse {
+  string request_id = 1;
+  string session_id = 2;
+  optional uint64 state_revision = 3;
+  MessageIntent message_intent = 4;
+  AnswerStatus answer_status = 5;
+  string assistant_message = 6;
+  BriefPatch brief_updates = 7;
+  repeated BriefField corrected_fields = 8;
+  // These lists describe the full state AFTER applying brief_updates.
+  repeated BriefField fields_to_reconfirm = 9;
+  repeated BriefField completed_fields = 10;
+  repeated BriefField missing_fields = 11;
+  PlanningStep current_step = 12; // Echo request.current_step.
+  PlanningStep next_step = 13; // Same step if unchanged; COMPLETE when done.
+  optional PlanningStep resume_step = 14;
+  repeated string ad_copy_candidates = 15;
+  bool is_complete = 16;
+}
+
+message GenerateDraftRequest {
+  string request_id = 1; // New ID per transport attempt.
+  string session_id = 2;
+  string draft_id = 3; // Stable for retries of the same draft/round/content.
+  uint32 generation_round = 4; // 1 or 2 only.
+  optional bool is_regeneration = 5; // Required; false iff round=1.
+  // Art direction: SPACE=space details, SERVICE=provided benefits, MOOD=atmosphere.
+  DraftDirection direction = 6;
+  AdvertisementBrief brief = 7; // Frozen final snapshot from FastAPI.
+  // One normalized JPEG/PNG/static WebP; <=25 MiB and <=20,000,000 pixels.
+  // FastAPI handles original preservation, <=60MP upload validation, resizing,
+  // EXIF orientation and color normalization. Server revalidates received bytes.
+  bytes original_image_bytes = 8;
+  string image_mime_type = 9;
+}
+
+message GenerateDraftResponse {
+  string request_id = 1;
+  string session_id = 2;
+  string draft_id = 3;
+  uint32 generation_round = 4;
+  DraftDirection direction = 5;
+  bytes image_bytes = 6; // PNG with overlaid Korean copy, <=25 MiB.
+  // Every V2 candidate is 1080x1350 PNG (4:5).
+  // Live: Image Gen edits the source photo and renders the complete advertisement.
+  string image_mime_type = 7; // Always image/png.
+}
+
+message HealthCheckResponse {
+  bool healthy = 1; // Local readiness only, no paid generation probe.
+}
+
+// Pack in google.protobuf.Any inside google.rpc.Status.details.
+// Transport: grpc-status-details-bin trailing metadata, canonical gRPC status.
+// Absence is possible for transport errors. No secrets or raw provider errors.
+message ModelErrorDetail {
+  string request_id = 1;
+  string reason = 2; // Stable machine code; see backend handoff reason table.
+  bool retryable = 3; // False for uncertain execution (RESULT_UNKNOWN).
+}

@@ -1,0 +1,1654 @@
+{
+  "schema_version": "proposal-2026-09-16",
+  "status": "contract review fixtures; not implemented RPC output",
+  "chat_cases": [
+    {
+      "id": "normal",
+      "request": {
+        "request_id": "normal",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "event_type": "user_message",
+        "user_message": "따뜻한 분위기, 베이지색으로 해주세요",
+        "current_step": "mood",
+        "brief": {
+          "lodging_type": "hotel",
+          "lodging_type_detail": null,
+          "lodging_name": "바다호텔",
+          "location": "강릉",
+          "selling_points": [
+            "오션뷰 객실"
+          ],
+          "target_audience": "가족 여행객",
+          "mood": null,
+          "color_preference": null,
+          "ad_copy": null
+        },
+        "original_image_uploaded": true,
+        "fields_to_reconfirm": [],
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "conversation_history": []
+      },
+      "response": {
+        "request_id": "normal",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "message_intent": "answer",
+        "answer_status": "valid",
+        "assistant_message": "광고 문구를 직접 입력하거나 추천받을 수 있어요. 문구 확정으로 기획서가 완성되면 수정할 수 없습니다.",
+        "brief_updates": {
+          "mood": "따뜻한",
+          "color_preference": "베이지"
+        },
+        "corrected_fields": [],
+        "fields_to_reconfirm": [],
+        "completed_fields": [
+          "lodging_type",
+          "lodging_name",
+          "location",
+          "selling_points",
+          "original_image",
+          "target_audience",
+          "mood",
+          "color_preference"
+        ],
+        "missing_fields": [
+          "ad_copy"
+        ],
+        "current_step": "mood",
+        "next_step": "ad_copy",
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "is_complete": false
+      }
+    },
+    {
+      "id": "ambiguous",
+      "request": {
+        "request_id": "ambiguous",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "event_type": "user_message",
+        "user_message": "그냥 괜찮게요",
+        "current_step": "mood",
+        "brief": {
+          "lodging_type": "hotel",
+          "lodging_type_detail": null,
+          "lodging_name": "바다호텔",
+          "location": "강릉",
+          "selling_points": [
+            "오션뷰 객실"
+          ],
+          "target_audience": "가족 여행객",
+          "mood": null,
+          "color_preference": null,
+          "ad_copy": null
+        },
+        "original_image_uploaded": true,
+        "fields_to_reconfirm": [],
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "conversation_history": []
+      },
+      "response": {
+        "request_id": "ambiguous",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "message_intent": "answer",
+        "answer_status": "ambiguous",
+        "assistant_message": "따뜻한 느낌과 세련된 느낌 중 어느 쪽을 원하시나요? 색상도 알려주세요.",
+        "brief_updates": {},
+        "corrected_fields": [],
+        "fields_to_reconfirm": [],
+        "completed_fields": [
+          "lodging_type",
+          "lodging_name",
+          "location",
+          "selling_points",
+          "original_image",
+          "target_audience"
+        ],
+        "missing_fields": [
+          "mood",
+          "color_preference",
+          "ad_copy"
+        ],
+        "current_step": "mood",
+        "next_step": "mood",
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "is_complete": false
+      }
+    },
+    {
+      "id": "off-topic",
+      "request": {
+        "request_id": "off-topic",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "event_type": "user_message",
+        "user_message": "오늘 점심은 김치찌개 먹었어요",
+        "current_step": "mood",
+        "brief": {
+          "lodging_type": "hotel",
+          "lodging_type_detail": null,
+          "lodging_name": "바다호텔",
+          "location": "강릉",
+          "selling_points": [
+            "오션뷰 객실"
+          ],
+          "target_audience": "가족 여행객",
+          "mood": null,
+          "color_preference": null,
+          "ad_copy": null
+        },
+        "original_image_uploaded": true,
+        "fields_to_reconfirm": [],
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "conversation_history": []
+      },
+      "response": {
+        "request_id": "off-topic",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "message_intent": "answer",
+        "answer_status": "off_topic",
+        "assistant_message": "광고 분위기와 원하는 색상을 알려주세요.",
+        "brief_updates": {},
+        "corrected_fields": [],
+        "fields_to_reconfirm": [],
+        "completed_fields": [
+          "lodging_type",
+          "lodging_name",
+          "location",
+          "selling_points",
+          "original_image",
+          "target_audience"
+        ],
+        "missing_fields": [
+          "mood",
+          "color_preference",
+          "ad_copy"
+        ],
+        "current_step": "mood",
+        "next_step": "mood",
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "is_complete": false
+      }
+    },
+    {
+      "id": "question",
+      "request": {
+        "request_id": "question",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "event_type": "user_message",
+        "user_message": "광고 분위기는 무슨 뜻인가요?",
+        "current_step": "mood",
+        "brief": {
+          "lodging_type": "hotel",
+          "lodging_type_detail": null,
+          "lodging_name": "바다호텔",
+          "location": "강릉",
+          "selling_points": [
+            "오션뷰 객실"
+          ],
+          "target_audience": "가족 여행객",
+          "mood": null,
+          "color_preference": null,
+          "ad_copy": null
+        },
+        "original_image_uploaded": true,
+        "fields_to_reconfirm": [],
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "conversation_history": []
+      },
+      "response": {
+        "request_id": "question",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "message_intent": "question",
+        "answer_status": "not_applicable",
+        "assistant_message": "따뜻함이나 세련됨처럼 광고에서 느껴지는 인상이에요. 원하는 분위기와 색상을 알려주세요.",
+        "brief_updates": {},
+        "corrected_fields": [],
+        "fields_to_reconfirm": [],
+        "completed_fields": [
+          "lodging_type",
+          "lodging_name",
+          "location",
+          "selling_points",
+          "original_image",
+          "target_audience"
+        ],
+        "missing_fields": [
+          "mood",
+          "color_preference",
+          "ad_copy"
+        ],
+        "current_step": "mood",
+        "next_step": "mood",
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "is_complete": false
+      }
+    },
+    {
+      "id": "correction",
+      "request": {
+        "request_id": "correction",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "event_type": "user_message",
+        "user_message": "호텔이 아니라 모텔이에요",
+        "current_step": "mood",
+        "brief": {
+          "lodging_type": "hotel",
+          "lodging_type_detail": null,
+          "lodging_name": "바다호텔",
+          "location": "강릉",
+          "selling_points": [
+            "오션뷰 객실"
+          ],
+          "target_audience": "가족 여행객",
+          "mood": null,
+          "color_preference": null,
+          "ad_copy": null
+        },
+        "original_image_uploaded": true,
+        "fields_to_reconfirm": [],
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "conversation_history": []
+      },
+      "response": {
+        "request_id": "correction",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "message_intent": "correction",
+        "answer_status": "valid",
+        "assistant_message": "모텔로 수정했어요. 원하는 분위기와 색상을 알려주세요.",
+        "brief_updates": {
+          "lodging_type": "motel"
+        },
+        "corrected_fields": [
+          "lodging_type"
+        ],
+        "fields_to_reconfirm": [],
+        "completed_fields": [
+          "lodging_type",
+          "lodging_name",
+          "location",
+          "selling_points",
+          "original_image",
+          "target_audience"
+        ],
+        "missing_fields": [
+          "mood",
+          "color_preference",
+          "ad_copy"
+        ],
+        "current_step": "mood",
+        "next_step": "mood",
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "is_complete": false
+      }
+    },
+    {
+      "id": "compound-correction",
+      "request": {
+        "request_id": "compound-correction",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "event_type": "user_message",
+        "user_message": "가족 말고 커플 대상으로 바꾸고 따뜻한 베이지로 해주세요",
+        "current_step": "mood",
+        "brief": {
+          "lodging_type": "hotel",
+          "lodging_type_detail": null,
+          "lodging_name": "바다호텔",
+          "location": "강릉",
+          "selling_points": [
+            "오션뷰 객실"
+          ],
+          "target_audience": "가족 여행객",
+          "mood": null,
+          "color_preference": null,
+          "ad_copy": null
+        },
+        "original_image_uploaded": true,
+        "fields_to_reconfirm": [],
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "conversation_history": []
+      },
+      "response": {
+        "request_id": "compound-correction",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "message_intent": "correction",
+        "answer_status": "valid",
+        "assistant_message": "타깃과 디자인을 반영했어요. 문구를 직접 입력하거나 추천받으세요. 문구 확정 후 기획서는 읽기 전용입니다.",
+        "brief_updates": {
+          "target_audience": "커플 여행객",
+          "mood": "따뜻한",
+          "color_preference": "베이지"
+        },
+        "corrected_fields": [
+          "target_audience"
+        ],
+        "fields_to_reconfirm": [],
+        "completed_fields": [
+          "lodging_type",
+          "lodging_name",
+          "location",
+          "selling_points",
+          "original_image",
+          "target_audience",
+          "mood",
+          "color_preference"
+        ],
+        "missing_fields": [
+          "ad_copy"
+        ],
+        "current_step": "mood",
+        "next_step": "ad_copy",
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "is_complete": false
+      }
+    },
+    {
+      "id": "ambiguous-correction",
+      "request": {
+        "request_id": "ambiguous-correction",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "event_type": "user_message",
+        "user_message": "타깃을 바꾸고 싶어요",
+        "current_step": "mood",
+        "brief": {
+          "lodging_type": "hotel",
+          "lodging_type_detail": null,
+          "lodging_name": "바다호텔",
+          "location": "강릉",
+          "selling_points": [
+            "오션뷰 객실"
+          ],
+          "target_audience": "가족 여행객",
+          "mood": null,
+          "color_preference": null,
+          "ad_copy": null
+        },
+        "original_image_uploaded": true,
+        "fields_to_reconfirm": [],
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "conversation_history": []
+      },
+      "response": {
+        "request_id": "ambiguous-correction",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "message_intent": "correction",
+        "answer_status": "ambiguous",
+        "assistant_message": "어떤 고객층으로 바꿀까요?",
+        "brief_updates": {},
+        "corrected_fields": [],
+        "fields_to_reconfirm": [
+          "target_audience"
+        ],
+        "completed_fields": [
+          "lodging_type",
+          "lodging_name",
+          "location",
+          "selling_points",
+          "original_image"
+        ],
+        "missing_fields": [
+          "target_audience",
+          "mood",
+          "color_preference",
+          "ad_copy"
+        ],
+        "current_step": "mood",
+        "next_step": "target_audience",
+        "resume_step": "mood",
+        "ad_copy_candidates": [],
+        "is_complete": false
+      }
+    },
+    {
+      "id": "reconfirm-return",
+      "request": {
+        "request_id": "reconfirm-return",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "event_type": "user_message",
+        "user_message": "커플 여행객으로 바꿔주세요",
+        "current_step": "target_audience",
+        "brief": {
+          "lodging_type": "hotel",
+          "lodging_type_detail": null,
+          "lodging_name": "바다호텔",
+          "location": "강릉",
+          "selling_points": [
+            "오션뷰 객실"
+          ],
+          "target_audience": "가족 여행객",
+          "mood": null,
+          "color_preference": null,
+          "ad_copy": null
+        },
+        "original_image_uploaded": true,
+        "fields_to_reconfirm": [
+          "target_audience"
+        ],
+        "resume_step": "mood",
+        "ad_copy_candidates": [],
+        "conversation_history": []
+      },
+      "response": {
+        "request_id": "reconfirm-return",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "message_intent": "correction",
+        "answer_status": "valid",
+        "assistant_message": "커플 여행객으로 수정했어요. 원하는 광고 분위기와 색상을 알려주세요.",
+        "brief_updates": {
+          "target_audience": "커플 여행객"
+        },
+        "corrected_fields": [
+          "target_audience"
+        ],
+        "fields_to_reconfirm": [],
+        "completed_fields": [
+          "lodging_type",
+          "lodging_name",
+          "location",
+          "selling_points",
+          "original_image",
+          "target_audience"
+        ],
+        "missing_fields": [
+          "mood",
+          "color_preference",
+          "ad_copy"
+        ],
+        "current_step": "target_audience",
+        "next_step": "mood",
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "is_complete": false
+      }
+    },
+    {
+      "id": "copy-propose",
+      "request": {
+        "request_id": "copy-propose",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "event_type": "user_message",
+        "user_message": "문구를 추천해주세요",
+        "current_step": "ad_copy",
+        "brief": {
+          "lodging_type": "hotel",
+          "lodging_type_detail": null,
+          "lodging_name": "바다호텔",
+          "location": "강릉",
+          "selling_points": [
+            "오션뷰 객실"
+          ],
+          "target_audience": "가족 여행객",
+          "mood": "따뜻한",
+          "color_preference": "auto",
+          "ad_copy": null
+        },
+        "original_image_uploaded": true,
+        "fields_to_reconfirm": [],
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "conversation_history": []
+      },
+      "response": {
+        "request_id": "copy-propose",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "message_intent": "answer",
+        "answer_status": "valid",
+        "assistant_message": "문구 3개를 제안했어요. 번호를 선택하거나 직접 입력하세요. 확정하면 기획서는 읽기 전용이 됩니다.",
+        "brief_updates": {},
+        "corrected_fields": [],
+        "fields_to_reconfirm": [],
+        "completed_fields": [
+          "lodging_type",
+          "lodging_name",
+          "location",
+          "selling_points",
+          "original_image",
+          "target_audience",
+          "mood",
+          "color_preference"
+        ],
+        "missing_fields": [
+          "ad_copy"
+        ],
+        "current_step": "ad_copy",
+        "next_step": "ad_copy",
+        "resume_step": null,
+        "ad_copy_candidates": [
+          "바다와 함께 쉬어가는 하루",
+          "강릉에서 만나는 여유",
+          "오션뷰와 함께하는 가족 여행"
+        ],
+        "is_complete": false
+      }
+    },
+    {
+      "id": "copy-select",
+      "request": {
+        "request_id": "copy-select",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "event_type": "user_message",
+        "user_message": "2번으로 할게요",
+        "current_step": "ad_copy",
+        "brief": {
+          "lodging_type": "hotel",
+          "lodging_type_detail": null,
+          "lodging_name": "바다호텔",
+          "location": "강릉",
+          "selling_points": [
+            "오션뷰 객실"
+          ],
+          "target_audience": "가족 여행객",
+          "mood": "따뜻한",
+          "color_preference": "auto",
+          "ad_copy": null
+        },
+        "original_image_uploaded": true,
+        "fields_to_reconfirm": [],
+        "resume_step": null,
+        "ad_copy_candidates": [
+          "바다와 함께 쉬어가는 하루",
+          "강릉에서 만나는 여유",
+          "오션뷰와 함께하는 가족 여행"
+        ],
+        "conversation_history": []
+      },
+      "response": {
+        "request_id": "copy-select",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "message_intent": "answer",
+        "answer_status": "valid",
+        "assistant_message": "기획서가 완성되어 읽기 전용으로 전환됐어요. 최종 확인 후 저장하고 이미지를 생성할 수 있어요.",
+        "brief_updates": {
+          "ad_copy": "강릉에서 만나는 여유"
+        },
+        "corrected_fields": [],
+        "fields_to_reconfirm": [],
+        "completed_fields": [
+          "lodging_type",
+          "lodging_name",
+          "location",
+          "selling_points",
+          "original_image",
+          "target_audience",
+          "mood",
+          "color_preference",
+          "ad_copy"
+        ],
+        "missing_fields": [],
+        "current_step": "ad_copy",
+        "next_step": "complete",
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "is_complete": true
+      }
+    },
+    {
+      "id": "copy-direct",
+      "request": {
+        "request_id": "copy-direct",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "event_type": "user_message",
+        "user_message": "문구는 “가족과 함께, 강릉의 바다”로 해주세요",
+        "current_step": "ad_copy",
+        "brief": {
+          "lodging_type": "hotel",
+          "lodging_type_detail": null,
+          "lodging_name": "바다호텔",
+          "location": "강릉",
+          "selling_points": [
+            "오션뷰 객실"
+          ],
+          "target_audience": "가족 여행객",
+          "mood": "따뜻한",
+          "color_preference": "auto",
+          "ad_copy": null
+        },
+        "original_image_uploaded": true,
+        "fields_to_reconfirm": [],
+        "resume_step": null,
+        "ad_copy_candidates": [
+          "바다와 함께 쉬어가는 하루",
+          "강릉에서 만나는 여유",
+          "오션뷰와 함께하는 가족 여행"
+        ],
+        "conversation_history": []
+      },
+      "response": {
+        "request_id": "copy-direct",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "message_intent": "answer",
+        "answer_status": "valid",
+        "assistant_message": "직접 입력한 문구로 기획서를 완성했어요. 최종 확인 후 생성할 수 있어요.",
+        "brief_updates": {
+          "ad_copy": "가족과 함께, 강릉의 바다"
+        },
+        "corrected_fields": [],
+        "fields_to_reconfirm": [],
+        "completed_fields": [
+          "lodging_type",
+          "lodging_name",
+          "location",
+          "selling_points",
+          "original_image",
+          "target_audience",
+          "mood",
+          "color_preference",
+          "ad_copy"
+        ],
+        "missing_fields": [],
+        "current_step": "ad_copy",
+        "next_step": "complete",
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "is_complete": true
+      }
+    },
+    {
+      "id": "copy-conflict",
+      "request": {
+        "request_id": "copy-conflict",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "event_type": "user_message",
+        "user_message": "2번으로 하고 문구는 다른 걸로 해주세요",
+        "current_step": "ad_copy",
+        "brief": {
+          "lodging_type": "hotel",
+          "lodging_type_detail": null,
+          "lodging_name": "바다호텔",
+          "location": "강릉",
+          "selling_points": [
+            "오션뷰 객실"
+          ],
+          "target_audience": "가족 여행객",
+          "mood": "따뜻한",
+          "color_preference": "auto",
+          "ad_copy": null
+        },
+        "original_image_uploaded": true,
+        "fields_to_reconfirm": [],
+        "resume_step": null,
+        "ad_copy_candidates": [
+          "바다와 함께 쉬어가는 하루",
+          "강릉에서 만나는 여유",
+          "오션뷰와 함께하는 가족 여행"
+        ],
+        "conversation_history": []
+      },
+      "response": {
+        "request_id": "copy-conflict",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "message_intent": "answer",
+        "answer_status": "ambiguous",
+        "assistant_message": "2번 문구를 사용할까요, 새 문구를 입력하실까요?",
+        "brief_updates": {},
+        "corrected_fields": [],
+        "fields_to_reconfirm": [],
+        "completed_fields": [
+          "lodging_type",
+          "lodging_name",
+          "location",
+          "selling_points",
+          "original_image",
+          "target_audience",
+          "mood",
+          "color_preference"
+        ],
+        "missing_fields": [
+          "ad_copy"
+        ],
+        "current_step": "ad_copy",
+        "next_step": "ad_copy",
+        "resume_step": null,
+        "ad_copy_candidates": [
+          "바다와 함께 쉬어가는 하루",
+          "강릉에서 만나는 여유",
+          "오션뷰와 함께하는 가족 여행"
+        ],
+        "is_complete": false
+      }
+    },
+    {
+      "id": "photo-only",
+      "request": {
+        "request_id": "photo-only",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "event_type": "image_uploaded",
+        "user_message": "",
+        "current_step": "selling_points",
+        "brief": {
+          "lodging_type": "hotel",
+          "lodging_type_detail": null,
+          "lodging_name": "바다호텔",
+          "location": "강릉",
+          "selling_points": [
+            "오션뷰 객실"
+          ],
+          "target_audience": "가족 여행객",
+          "mood": "따뜻한",
+          "color_preference": "auto",
+          "ad_copy": null
+        },
+        "original_image_uploaded": true,
+        "fields_to_reconfirm": [],
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "conversation_history": []
+      },
+      "response": {
+        "request_id": "photo-only",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "message_intent": "system_event",
+        "answer_status": "not_applicable",
+        "assistant_message": "사진 업로드를 확인했어요. 광고 문구를 입력하거나 추천받으세요. 문구 확정 후 수정할 수 없습니다.",
+        "brief_updates": {},
+        "corrected_fields": [],
+        "fields_to_reconfirm": [],
+        "completed_fields": [
+          "lodging_type",
+          "lodging_name",
+          "location",
+          "selling_points",
+          "original_image",
+          "target_audience",
+          "mood",
+          "color_preference"
+        ],
+        "missing_fields": [
+          "ad_copy"
+        ],
+        "current_step": "selling_points",
+        "next_step": "ad_copy",
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "is_complete": false
+      }
+    },
+    {
+      "id": "photo-missing",
+      "request": {
+        "request_id": "photo-missing",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "event_type": "user_message",
+        "user_message": "문구는 강릉에서 만나는 여유로 해주세요",
+        "current_step": "selling_points",
+        "brief": {
+          "lodging_type": "hotel",
+          "lodging_type_detail": null,
+          "lodging_name": "바다호텔",
+          "location": "강릉",
+          "selling_points": [
+            "오션뷰 객실"
+          ],
+          "target_audience": "가족 여행객",
+          "mood": "따뜻한",
+          "color_preference": "auto",
+          "ad_copy": null
+        },
+        "original_image_uploaded": false,
+        "fields_to_reconfirm": [],
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "conversation_history": []
+      },
+      "response": {
+        "request_id": "photo-missing",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "message_intent": "answer",
+        "answer_status": "valid",
+        "assistant_message": "광고에 사용할 숙소 사진을 업로드해주세요. 사진이 확인되면 기획서가 완성되어 수정할 수 없습니다.",
+        "brief_updates": {
+          "ad_copy": "강릉에서 만나는 여유"
+        },
+        "corrected_fields": [],
+        "fields_to_reconfirm": [],
+        "completed_fields": [
+          "lodging_type",
+          "lodging_name",
+          "location",
+          "selling_points",
+          "target_audience",
+          "mood",
+          "color_preference",
+          "ad_copy"
+        ],
+        "missing_fields": [
+          "original_image"
+        ],
+        "current_step": "selling_points",
+        "next_step": "selling_points",
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "is_complete": false
+      }
+    },
+    {
+      "id": "photo-completes",
+      "request": {
+        "request_id": "photo-completes",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "event_type": "image_uploaded",
+        "user_message": "",
+        "current_step": "selling_points",
+        "brief": {
+          "lodging_type": "hotel",
+          "lodging_type_detail": null,
+          "lodging_name": "바다호텔",
+          "location": "강릉",
+          "selling_points": [
+            "오션뷰 객실"
+          ],
+          "target_audience": "가족 여행객",
+          "mood": "따뜻한",
+          "color_preference": "auto",
+          "ad_copy": "강릉에서 만나는 여유"
+        },
+        "original_image_uploaded": true,
+        "fields_to_reconfirm": [],
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "conversation_history": []
+      },
+      "response": {
+        "request_id": "photo-completes",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "message_intent": "system_event",
+        "answer_status": "not_applicable",
+        "assistant_message": "사진을 확인했어요. 기획서가 완성되어 읽기 전용으로 전환됐어요.",
+        "brief_updates": {},
+        "corrected_fields": [],
+        "fields_to_reconfirm": [],
+        "completed_fields": [
+          "lodging_type",
+          "lodging_name",
+          "location",
+          "selling_points",
+          "original_image",
+          "target_audience",
+          "mood",
+          "color_preference",
+          "ad_copy"
+        ],
+        "missing_fields": [],
+        "current_step": "selling_points",
+        "next_step": "complete",
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "is_complete": true
+      }
+    },
+    {
+      "id": "delete-replace",
+      "request": {
+        "request_id": "delete-replace",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "event_type": "user_message",
+        "user_message": "지역은 지우고 장점은 무료 주차 하나만 남겨주세요",
+        "current_step": "mood",
+        "brief": {
+          "lodging_type": "hotel",
+          "lodging_type_detail": null,
+          "lodging_name": "바다호텔",
+          "location": "강릉",
+          "selling_points": [
+            "오션뷰 객실"
+          ],
+          "target_audience": "가족 여행객",
+          "mood": null,
+          "color_preference": null,
+          "ad_copy": null
+        },
+        "original_image_uploaded": true,
+        "fields_to_reconfirm": [],
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "conversation_history": []
+      },
+      "response": {
+        "request_id": "delete-replace",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "message_intent": "correction",
+        "answer_status": "valid",
+        "assistant_message": "지역을 삭제하고 장점을 바꿨어요. 숙소가 있는 지역을 알려주세요.",
+        "brief_updates": {
+          "location": null,
+          "selling_points": [
+            "무료 주차"
+          ]
+        },
+        "corrected_fields": [
+          "location",
+          "selling_points"
+        ],
+        "fields_to_reconfirm": [],
+        "completed_fields": [
+          "lodging_type",
+          "lodging_name",
+          "selling_points",
+          "original_image",
+          "target_audience"
+        ],
+        "missing_fields": [
+          "location",
+          "mood",
+          "color_preference",
+          "ad_copy"
+        ],
+        "current_step": "mood",
+        "next_step": "lodging_information",
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "is_complete": false
+      }
+    },
+    {
+      "id": "other-detail",
+      "request": {
+        "request_id": "other-detail",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "event_type": "user_message",
+        "user_message": "게스트하우스예요",
+        "current_step": "mood",
+        "brief": {
+          "lodging_type": "hotel",
+          "lodging_type_detail": null,
+          "lodging_name": "바다호텔",
+          "location": "강릉",
+          "selling_points": [
+            "오션뷰 객실"
+          ],
+          "target_audience": "가족 여행객",
+          "mood": null,
+          "color_preference": null,
+          "ad_copy": null
+        },
+        "original_image_uploaded": true,
+        "fields_to_reconfirm": [],
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "conversation_history": []
+      },
+      "response": {
+        "request_id": "other-detail",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "message_intent": "correction",
+        "answer_status": "valid",
+        "assistant_message": "게스트하우스로 수정했어요. 분위기와 색상을 알려주세요.",
+        "brief_updates": {
+          "lodging_type": "other",
+          "lodging_type_detail": "게스트하우스"
+        },
+        "corrected_fields": [
+          "lodging_type"
+        ],
+        "fields_to_reconfirm": [],
+        "completed_fields": [
+          "lodging_type",
+          "lodging_type_detail",
+          "lodging_name",
+          "location",
+          "selling_points",
+          "original_image",
+          "target_audience"
+        ],
+        "missing_fields": [
+          "mood",
+          "color_preference",
+          "ad_copy"
+        ],
+        "current_step": "mood",
+        "next_step": "mood",
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "is_complete": false
+      }
+    },
+    {
+      "id": "clear-other-detail",
+      "request": {
+        "request_id": "clear-other-detail",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "event_type": "user_message",
+        "user_message": "호텔로 바꿔주세요",
+        "current_step": "mood",
+        "brief": {
+          "lodging_type": "other",
+          "lodging_type_detail": "게스트하우스",
+          "lodging_name": "바다호텔",
+          "location": "강릉",
+          "selling_points": [
+            "오션뷰 객실"
+          ],
+          "target_audience": "가족 여행객",
+          "mood": null,
+          "color_preference": null,
+          "ad_copy": null
+        },
+        "original_image_uploaded": true,
+        "fields_to_reconfirm": [],
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "conversation_history": []
+      },
+      "response": {
+        "request_id": "clear-other-detail",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "message_intent": "correction",
+        "answer_status": "valid",
+        "assistant_message": "호텔로 수정했어요. 분위기와 색상을 알려주세요.",
+        "brief_updates": {
+          "lodging_type": "hotel",
+          "lodging_type_detail": null
+        },
+        "corrected_fields": [
+          "lodging_type",
+          "lodging_type_detail"
+        ],
+        "fields_to_reconfirm": [],
+        "completed_fields": [
+          "lodging_type",
+          "lodging_name",
+          "location",
+          "selling_points",
+          "original_image",
+          "target_audience"
+        ],
+        "missing_fields": [
+          "mood",
+          "color_preference",
+          "ad_copy"
+        ],
+        "current_step": "mood",
+        "next_step": "mood",
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "is_complete": false
+      }
+    },
+    {
+      "id": "invalidate-candidates",
+      "request": {
+        "request_id": "invalidate-candidates",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "event_type": "user_message",
+        "user_message": "가족 대신 출장객으로 바꿀게요",
+        "current_step": "mood",
+        "brief": {
+          "lodging_type": "hotel",
+          "lodging_type_detail": null,
+          "lodging_name": "바다호텔",
+          "location": "강릉",
+          "selling_points": [
+            "오션뷰 객실"
+          ],
+          "target_audience": "가족 여행객",
+          "mood": null,
+          "color_preference": "auto",
+          "ad_copy": null
+        },
+        "original_image_uploaded": true,
+        "fields_to_reconfirm": [],
+        "resume_step": null,
+        "ad_copy_candidates": [
+          "바다와 함께 쉬어가는 하루",
+          "강릉에서 만나는 여유",
+          "오션뷰와 함께하는 가족 여행"
+        ],
+        "conversation_history": []
+      },
+      "response": {
+        "request_id": "invalidate-candidates",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "message_intent": "correction",
+        "answer_status": "valid",
+        "assistant_message": "타깃을 변경해 기존 문구 후보를 지웠어요. 원하는 분위기를 알려주세요.",
+        "brief_updates": {
+          "target_audience": "출장객"
+        },
+        "corrected_fields": [
+          "target_audience"
+        ],
+        "fields_to_reconfirm": [],
+        "completed_fields": [
+          "lodging_type",
+          "lodging_name",
+          "location",
+          "selling_points",
+          "original_image",
+          "target_audience",
+          "color_preference"
+        ],
+        "missing_fields": [
+          "mood",
+          "ad_copy"
+        ],
+        "current_step": "mood",
+        "next_step": "mood",
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "is_complete": false
+      }
+    },
+    {
+      "id": "dependent-reconfirm",
+      "request": {
+        "request_id": "dependent-reconfirm",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "event_type": "user_message",
+        "user_message": "출장객 대상으로 바꾸고 차분하게 해주세요",
+        "current_step": "mood",
+        "brief": {
+          "lodging_type": "hotel",
+          "lodging_type_detail": null,
+          "lodging_name": "바다호텔",
+          "location": "강릉",
+          "selling_points": [
+            "오션뷰 객실"
+          ],
+          "target_audience": "가족 여행객",
+          "mood": null,
+          "color_preference": "auto",
+          "ad_copy": "가족과 함께하는 바다 여행"
+        },
+        "original_image_uploaded": true,
+        "fields_to_reconfirm": [],
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "conversation_history": []
+      },
+      "response": {
+        "request_id": "dependent-reconfirm",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "message_intent": "correction",
+        "answer_status": "valid",
+        "assistant_message": "기존 가족 대상 문구는 새 타깃과 맞지 않아요. 새 문구를 입력하거나 추천받으세요.",
+        "brief_updates": {
+          "target_audience": "출장객",
+          "mood": "차분한"
+        },
+        "corrected_fields": [
+          "target_audience"
+        ],
+        "fields_to_reconfirm": [
+          "ad_copy"
+        ],
+        "completed_fields": [
+          "lodging_type",
+          "lodging_name",
+          "location",
+          "selling_points",
+          "original_image",
+          "target_audience",
+          "mood",
+          "color_preference"
+        ],
+        "missing_fields": [
+          "ad_copy"
+        ],
+        "current_step": "mood",
+        "next_step": "ad_copy",
+        "resume_step": "ad_copy",
+        "ad_copy_candidates": [],
+        "is_complete": false
+      }
+    },
+    {
+      "id": "dependent-reconfirm-complete",
+      "request": {
+        "request_id": "dependent-reconfirm-complete",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "event_type": "user_message",
+        "user_message": "문구는 출장 끝, 바다와 휴식으로 할게요",
+        "current_step": "ad_copy",
+        "brief": {
+          "lodging_type": "hotel",
+          "lodging_type_detail": null,
+          "lodging_name": "바다호텔",
+          "location": "강릉",
+          "selling_points": [
+            "오션뷰 객실"
+          ],
+          "target_audience": "출장객",
+          "mood": "차분한",
+          "color_preference": "auto",
+          "ad_copy": "가족과 함께하는 바다 여행"
+        },
+        "original_image_uploaded": true,
+        "fields_to_reconfirm": [
+          "ad_copy"
+        ],
+        "resume_step": "ad_copy",
+        "ad_copy_candidates": [],
+        "conversation_history": []
+      },
+      "response": {
+        "request_id": "dependent-reconfirm-complete",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "message_intent": "correction",
+        "answer_status": "valid",
+        "assistant_message": "새 문구로 기획서가 완성됐어요. 최종 확인 후 생성할 수 있어요.",
+        "brief_updates": {
+          "ad_copy": "출장 끝, 바다와 휴식"
+        },
+        "corrected_fields": [
+          "ad_copy"
+        ],
+        "fields_to_reconfirm": [],
+        "completed_fields": [
+          "lodging_type",
+          "lodging_name",
+          "location",
+          "selling_points",
+          "original_image",
+          "target_audience",
+          "mood",
+          "color_preference",
+          "ad_copy"
+        ],
+        "missing_fields": [],
+        "current_step": "ad_copy",
+        "next_step": "complete",
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "is_complete": true
+      }
+    },
+    {
+      "id": "initial-multiple",
+      "request": {
+        "request_id": "initial-multiple",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "event_type": "user_message",
+        "user_message": "강릉 바다호텔이고 호텔이에요",
+        "current_step": "lodging_type",
+        "brief": {
+          "lodging_type": null,
+          "lodging_type_detail": null,
+          "lodging_name": null,
+          "location": null,
+          "selling_points": [],
+          "target_audience": null,
+          "mood": null,
+          "color_preference": null,
+          "ad_copy": null
+        },
+        "original_image_uploaded": false,
+        "fields_to_reconfirm": [],
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "conversation_history": []
+      },
+      "response": {
+        "request_id": "initial-multiple",
+        "session_id": "session-example",
+        "state_revision": 7,
+        "message_intent": "answer",
+        "answer_status": "valid",
+        "assistant_message": "숙소의 장점을 알려주시고 사진을 업로드해주세요.",
+        "brief_updates": {
+          "lodging_type": "hotel",
+          "lodging_name": "바다호텔",
+          "location": "강릉"
+        },
+        "corrected_fields": [],
+        "fields_to_reconfirm": [],
+        "completed_fields": [
+          "lodging_type",
+          "lodging_name",
+          "location"
+        ],
+        "missing_fields": [
+          "selling_points",
+          "original_image",
+          "target_audience",
+          "mood",
+          "color_preference",
+          "ad_copy"
+        ],
+        "current_step": "lodging_type",
+        "next_step": "selling_points",
+        "resume_step": null,
+        "ad_copy_candidates": [],
+        "is_complete": false
+      }
+    }
+  ],
+  "image_cases": [
+    {
+      "id": "generate-r1-a",
+      "request": {
+        "request_id": "image-r1-a-attempt1",
+        "session_id": "session-example",
+        "draft_id": "draft-r1-a",
+        "generation_round": 1,
+        "is_regeneration": false,
+        "direction": "room",
+        "brief": {
+          "lodging_type": "hotel",
+          "lodging_type_detail": null,
+          "lodging_name": "바다호텔",
+          "location": "강릉",
+          "selling_points": [
+            "오션뷰 객실"
+          ],
+          "target_audience": "가족 여행객",
+          "mood": "따뜻한",
+          "color_preference": "auto",
+          "ad_copy": "강릉에서 만나는 여유"
+        },
+        "original_image_bytes": "<normalized binary bytes; not literal wire data>",
+        "image_mime_type": "image/png"
+      },
+      "response": {
+        "request_id": "image-r1-a-attempt1",
+        "session_id": "session-example",
+        "draft_id": "draft-r1-a",
+        "generation_round": 1,
+        "direction": "room",
+        "image_bytes": "<PNG binary bytes; 1080x1350 portrait 4:5 for every direction; not literal wire data>",
+        "image_mime_type": "image/png"
+      }
+    },
+    {
+      "id": "generate-r1-b",
+      "request": {
+        "request_id": "image-r1-b-attempt1",
+        "session_id": "session-example",
+        "draft_id": "draft-r1-b",
+        "generation_round": 1,
+        "is_regeneration": false,
+        "direction": "emotion",
+        "brief": {
+          "lodging_type": "hotel",
+          "lodging_type_detail": null,
+          "lodging_name": "바다호텔",
+          "location": "강릉",
+          "selling_points": [
+            "오션뷰 객실"
+          ],
+          "target_audience": "가족 여행객",
+          "mood": "따뜻한",
+          "color_preference": "auto",
+          "ad_copy": "강릉에서 만나는 여유"
+        },
+        "original_image_bytes": "<normalized binary bytes; not literal wire data>",
+        "image_mime_type": "image/png"
+      },
+      "response": {
+        "request_id": "image-r1-b-attempt1",
+        "session_id": "session-example",
+        "draft_id": "draft-r1-b",
+        "generation_round": 1,
+        "direction": "emotion",
+        "image_bytes": "<PNG binary bytes; 1080x1350 portrait 4:5 for every direction; not literal wire data>",
+        "image_mime_type": "image/png"
+      }
+    },
+    {
+      "id": "generate-r1-c",
+      "request": {
+        "request_id": "image-r1-c-attempt1",
+        "session_id": "session-example",
+        "draft_id": "draft-r1-c",
+        "generation_round": 1,
+        "is_regeneration": false,
+        "direction": "benefit",
+        "brief": {
+          "lodging_type": "hotel",
+          "lodging_type_detail": null,
+          "lodging_name": "바다호텔",
+          "location": "강릉",
+          "selling_points": [
+            "오션뷰 객실"
+          ],
+          "target_audience": "가족 여행객",
+          "mood": "따뜻한",
+          "color_preference": "auto",
+          "ad_copy": "강릉에서 만나는 여유"
+        },
+        "original_image_bytes": "<normalized binary bytes; not literal wire data>",
+        "image_mime_type": "image/png"
+      },
+      "response": {
+        "request_id": "image-r1-c-attempt1",
+        "session_id": "session-example",
+        "draft_id": "draft-r1-c",
+        "generation_round": 1,
+        "direction": "benefit",
+        "image_bytes": "<PNG binary bytes; 1080x1350 portrait 4:5 for every direction; not literal wire data>",
+        "image_mime_type": "image/png"
+      }
+    },
+    {
+      "id": "generate-r2-a",
+      "request": {
+        "request_id": "image-r2-a-attempt1",
+        "session_id": "session-example",
+        "draft_id": "draft-r2-a",
+        "generation_round": 2,
+        "is_regeneration": true,
+        "direction": "room",
+        "brief": {
+          "lodging_type": "hotel",
+          "lodging_type_detail": null,
+          "lodging_name": "바다호텔",
+          "location": "강릉",
+          "selling_points": [
+            "오션뷰 객실"
+          ],
+          "target_audience": "가족 여행객",
+          "mood": "따뜻한",
+          "color_preference": "auto",
+          "ad_copy": "강릉에서 만나는 여유"
+        },
+        "original_image_bytes": "<normalized binary bytes; not literal wire data>",
+        "image_mime_type": "image/png"
+      },
+      "response": {
+        "request_id": "image-r2-a-attempt1",
+        "session_id": "session-example",
+        "draft_id": "draft-r2-a",
+        "generation_round": 2,
+        "direction": "room",
+        "image_bytes": "<PNG binary bytes; 1080x1350 portrait 4:5 for every direction; not literal wire data>",
+        "image_mime_type": "image/png"
+      }
+    },
+    {
+      "id": "generate-r2-b",
+      "request": {
+        "request_id": "image-r2-b-attempt1",
+        "session_id": "session-example",
+        "draft_id": "draft-r2-b",
+        "generation_round": 2,
+        "is_regeneration": true,
+        "direction": "emotion",
+        "brief": {
+          "lodging_type": "hotel",
+          "lodging_type_detail": null,
+          "lodging_name": "바다호텔",
+          "location": "강릉",
+          "selling_points": [
+            "오션뷰 객실"
+          ],
+          "target_audience": "가족 여행객",
+          "mood": "따뜻한",
+          "color_preference": "auto",
+          "ad_copy": "강릉에서 만나는 여유"
+        },
+        "original_image_bytes": "<normalized binary bytes; not literal wire data>",
+        "image_mime_type": "image/png"
+      },
+      "response": {
+        "request_id": "image-r2-b-attempt1",
+        "session_id": "session-example",
+        "draft_id": "draft-r2-b",
+        "generation_round": 2,
+        "direction": "emotion",
+        "image_bytes": "<PNG binary bytes; 1080x1350 portrait 4:5 for every direction; not literal wire data>",
+        "image_mime_type": "image/png"
+      }
+    },
+    {
+      "id": "generate-r2-c",
+      "request": {
+        "request_id": "image-r2-c-attempt1",
+        "session_id": "session-example",
+        "draft_id": "draft-r2-c",
+        "generation_round": 2,
+        "is_regeneration": true,
+        "direction": "benefit",
+        "brief": {
+          "lodging_type": "hotel",
+          "lodging_type_detail": null,
+          "lodging_name": "바다호텔",
+          "location": "강릉",
+          "selling_points": [
+            "오션뷰 객실"
+          ],
+          "target_audience": "가족 여행객",
+          "mood": "따뜻한",
+          "color_preference": "auto",
+          "ad_copy": "강릉에서 만나는 여유"
+        },
+        "original_image_bytes": "<normalized binary bytes; not literal wire data>",
+        "image_mime_type": "image/png"
+      },
+      "response": {
+        "request_id": "image-r2-c-attempt1",
+        "session_id": "session-example",
+        "draft_id": "draft-r2-c",
+        "generation_round": 2,
+        "direction": "benefit",
+        "image_bytes": "<PNG binary bytes; 1080x1350 portrait 4:5 for every direction; not literal wire data>",
+        "image_mime_type": "image/png"
+      }
+    }
+  ],
+  "error_examples": [
+    {
+      "id": "readonly",
+      "grpc_code": "FAILED_PRECONDITION",
+      "details": {
+        "request_id": "error-readonly",
+        "reason": "BRIEF_READ_ONLY",
+        "retryable": false
+      }
+    },
+    {
+      "id": "incomplete",
+      "grpc_code": "FAILED_PRECONDITION",
+      "details": {
+        "request_id": "error-incomplete",
+        "reason": "BRIEF_INCOMPLETE",
+        "retryable": false
+      }
+    },
+    {
+      "id": "bad-event",
+      "grpc_code": "INVALID_ARGUMENT",
+      "details": {
+        "request_id": "error-bad-event",
+        "reason": "INVALID_EVENT",
+        "retryable": false
+      }
+    },
+    {
+      "id": "bad-round",
+      "grpc_code": "INVALID_ARGUMENT",
+      "details": {
+        "request_id": "error-bad-round",
+        "reason": "INVALID_GENERATION_ROUND",
+        "retryable": false
+      }
+    },
+    {
+      "id": "large-image",
+      "grpc_code": "RESOURCE_EXHAUSTED",
+      "details": {
+        "request_id": "error-large-image",
+        "reason": "INPUT_TOO_LARGE",
+        "retryable": false
+      }
+    },
+    {
+      "id": "rate-limit",
+      "grpc_code": "RESOURCE_EXHAUSTED",
+      "details": {
+        "request_id": "error-rate-limit",
+        "reason": "UPSTREAM_RATE_LIMIT",
+        "retryable": true
+      }
+    },
+    {
+      "id": "invalid-output",
+      "grpc_code": "INTERNAL",
+      "details": {
+        "request_id": "error-invalid-output",
+        "reason": "MODEL_OUTPUT_INVALID",
+        "retryable": false
+      }
+    },
+    {
+      "id": "timeout",
+      "grpc_code": "DEADLINE_EXCEEDED",
+      "details": {
+        "request_id": "error-timeout",
+        "reason": "RESULT_UNKNOWN",
+        "retryable": false
+      }
+    }
+  ]
+}

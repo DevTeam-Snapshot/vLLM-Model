@@ -1,0 +1,9 @@
+{
+  "include": ["v2", "scripts/generate_stubs.py", "scripts/check_local.py", "scripts/run_model.py"],
+  "exclude": ["generated", ".venv-v2", "examples", "tests"],
+  "venvPath": ".",
+  "venv": ".venv-v2",
+  "extraPaths": ["generated", "examples"],
+  "pythonVersion": "3.12",
+  "typeCheckingMode": "standard"
+}

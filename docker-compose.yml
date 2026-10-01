@@ -2,16 +2,24 @@ name: hotel-ad-image
 
 services:
   llm-service:
-    image: hotel-ad-image-api:latest
+    image: hotel-ad-model-v2:local
     build: .
     ports:
       - "127.0.0.1:15051:50051"
     environment:
+      MODEL_MODE: ${MODEL_MODE:-fake}
+      GRPC_HOST: 0.0.0.0
+      PORT: 50051
+      VLLM_BASE_URL: ${VLLM_BASE_URL:-http://host.docker.internal:8000/v1}
+      VLLM_MODEL: ${VLLM_MODEL:-hotel-agent}
+      VLLM_API_KEY: ${VLLM_API_KEY:-EMPTY}
+      VLLM_CONTEXT_TOKENS: ${VLLM_CONTEXT_TOKENS:-12288}
+      VLLM_TIMEOUT_SECONDS: ${VLLM_TIMEOUT_SECONDS:-25}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-    networks:
-      backend-network:
-
-networks:
-  backend-network:
-    external: true
-    name: ${BACKEND_DOCKER_NETWORK:-fastapi-backend_default}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      IMAGE_MAX_CONCURRENCY: ${IMAGE_MAX_CONCURRENCY:-3}
+      IMAGE_MODEL: ${IMAGE_MODEL:-gpt-image-2}
+      IMAGE_QUALITY: ${IMAGE_QUALITY:-high}
+      IMAGE_TIMEOUT_SECONDS: ${IMAGE_TIMEOUT_SECONDS:-150}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

@@ -1,0 +1,4 @@
+-r requirements-v2-server.txt
+pytest>=8,<10
+ruff>=0.9,<1
+basedpyright>=1.27,<2
