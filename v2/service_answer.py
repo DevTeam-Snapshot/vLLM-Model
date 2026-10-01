@@ -37,5 +37,4 @@ def ground_service_answer(
     return Extraction(
         intent=extraction.intent,
         status="ambiguous",
-        explanation="서비스·혜택에 대한 답변을 확인해 주세요.",
     )
